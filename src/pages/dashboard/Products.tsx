@@ -9,7 +9,9 @@ import {
   Trash2, 
   AlertTriangle,
   Filter,
-  Package
+  Package,
+  Upload,
+  X as CloseIcon
 } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import { Input } from '../../components/ui/Input';
@@ -35,10 +37,31 @@ export const Products = () => {
   const [editingProduct, setEditingProduct] = React.useState<any>(null);
   const [productToDelete, setProductToDelete] = React.useState<any>(null);
   const [searchQuery, setSearchQuery] = React.useState('');
+  const [isUploading, setIsUploading] = React.useState(false);
 
-  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<any>({
+  const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<any>({
     resolver: zodResolver(productSchema),
   });
+
+  const imageUrl = watch('imageUrl');
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File is too large. Max size is 5MB.');
+      return;
+    }
+
+    setIsUploading(true);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setValue('imageUrl', reader.result as string);
+      setIsUploading(false);
+    };
+    reader.readAsDataURL(file);
+  };
 
   React.useEffect(() => {
     fetchProducts();
@@ -127,11 +150,11 @@ export const Products = () => {
                   <Package className="h-12 w-12" />
                 </div>
               )}
-              <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Button variant="secondary" size="sm" onClick={() => handleEdit(product)} className="h-9 w-9 p-0 rounded-xl bg-white/90 backdrop-blur-sm">
+              <div className="absolute top-3 right-3 flex gap-2">
+                <Button variant="secondary" size="sm" onClick={() => handleEdit(product)} className="h-9 w-9 p-0 rounded-xl bg-white shadow-sm border border-gray-100 hover:bg-indigo-50">
                   <Edit2 className="h-4 w-4 text-indigo-600" />
                 </Button>
-                <Button variant="secondary" size="sm" onClick={() => handleDeleteClick(product)} className="h-9 w-9 p-0 rounded-xl bg-white/90 backdrop-blur-sm hover:bg-red-50">
+                <Button variant="secondary" size="sm" onClick={() => handleDeleteClick(product)} className="h-9 w-9 p-0 rounded-xl bg-white shadow-sm border border-gray-100 hover:bg-red-50">
                   <Trash2 className="h-4 w-4 text-red-600" />
                 </Button>
               </div>
@@ -183,7 +206,54 @@ export const Products = () => {
       >
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <Input label="Product Name" {...register('name')} error={errors.name?.message} />
-          <Input label="Image URL" {...register('imageUrl')} error={errors.imageUrl?.message} placeholder="https://example.com/image.jpg" />
+          
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700">Product Image</label>
+            <div className="flex flex-col gap-4">
+              {imageUrl ? (
+                <div className="relative w-full aspect-video rounded-2xl overflow-hidden border border-gray-100 bg-gray-50 group">
+                  <img 
+                    src={imageUrl} 
+                    alt="Preview" 
+                    className="w-full h-full object-contain"
+                    referrerPolicy="no-referrer"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setValue('imageUrl', '')}
+                    className="absolute top-2 right-2 p-1.5 bg-red-600 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                  >
+                    <CloseIcon className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <label className="flex flex-col items-center justify-center w-full aspect-video rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 hover:bg-gray-100 hover:border-indigo-300 transition-all cursor-pointer">
+                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                    <Upload className="w-8 h-8 mb-3 text-gray-400" />
+                    <p className="mb-2 text-sm text-gray-500 font-medium">Click to upload or drag and drop</p>
+                    <p className="text-xs text-gray-400">PNG, JPG or WEBP (MAX. 5MB)</p>
+                  </div>
+                  <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+                </label>
+              )}
+              
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-gray-100"></span>
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-white px-2 text-gray-400">Or use URL</span>
+                </div>
+              </div>
+
+              <Input 
+                {...register('imageUrl')} 
+                error={errors.imageUrl?.message} 
+                placeholder="https://example.com/image.jpg" 
+              />
+            </div>
+          </div>
+
           <Input label="Barcode (Optional)" {...register('barcode')} error={errors.barcode?.message} />
           <Input label="Category" {...register('category')} error={errors.category?.message} />
           <div className="grid grid-cols-2 gap-4">
@@ -192,7 +262,7 @@ export const Products = () => {
           </div>
           <div className="flex gap-3 pt-4">
             <Button variant="secondary" type="button" className="flex-1" onClick={() => setIsModalOpen(false)}>Cancel</Button>
-            <Button type="submit" className="flex-1" isLoading={isLoading}>
+            <Button type="submit" className="flex-1" isLoading={isLoading || isUploading}>
               {editingProduct ? 'Update Product' : 'Add Product'}
             </Button>
           </div>

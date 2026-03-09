@@ -16,40 +16,12 @@ import { Input } from '../../components/ui/Input';
 import { formatCurrency, cn } from '../../utils/helpers';
 
 export const Inventory = () => {
-  const { products, fetchProducts, updateProduct, recordSale, isLoading } = useStore();
+  const { products, fetchProducts } = useStore();
   const [searchQuery, setSearchQuery] = React.useState('');
-  const [isSaleModalOpen, setIsSaleModalOpen] = React.useState(false);
-  const [selectedProduct, setSelectedProduct] = React.useState<any>(null);
-  const [saleQuantity, setSaleQuantity] = React.useState(1);
-  const [paymentType, setPaymentType] = React.useState<'cash' | 'debt'>('cash');
-  const [customerName, setCustomerName] = React.useState('');
 
   React.useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
-
-  const handleUpdateStock = async (id: number, currentStock: number, delta: number) => {
-    const newStock = Math.max(0, currentStock + delta);
-    await updateProduct(id, { stock: newStock });
-  };
-
-  const handleOpenSale = (product: any) => {
-    setSelectedProduct(product);
-    setSaleQuantity(1);
-    setPaymentType('cash');
-    setCustomerName('');
-    setIsSaleModalOpen(true);
-  };
-
-  const handleRecordSale = async () => {
-    if (!selectedProduct) return;
-    
-    const totalPrice = selectedProduct.price * saleQuantity;
-    const items = [{ id: selectedProduct.id, quantity: saleQuantity, price: selectedProduct.price }];
-    
-    await recordSale(items, totalPrice, paymentType, customerName);
-    setIsSaleModalOpen(false);
-  };
 
   const filteredProducts = products.filter(p => 
     p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -100,8 +72,7 @@ export const Inventory = () => {
                 <th className="px-6 py-4 text-sm font-bold text-gray-600 uppercase tracking-wider">Product</th>
                 <th className="px-6 py-4 text-sm font-bold text-gray-600 uppercase tracking-wider">Category</th>
                 <th className="px-6 py-4 text-sm font-bold text-gray-600 uppercase tracking-wider text-center">Current Stock</th>
-                <th className="px-6 py-4 text-sm font-bold text-gray-600 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-4 text-sm font-bold text-gray-600 uppercase tracking-wider text-right">Quick Adjust</th>
+                <th className="px-6 py-4 text-sm font-bold text-gray-600 uppercase tracking-wider text-right">Status</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -127,61 +98,20 @@ export const Inventory = () => {
                       {product.category}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-center">
-                    <span className={cn(
-                      "text-xl font-bold",
-                      product.stock <= 5 ? "text-red-600" : "text-gray-900"
-                    )}>
-                      {product.stock}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-4 text-right">
                     {product.stock > 5 ? (
-                      <span className="inline-flex items-center gap-1.5 text-emerald-600 text-xs font-bold uppercase">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 text-xs font-bold uppercase rounded-full">
                         Good
                       </span>
                     ) : product.stock > 0 ? (
-                      <span className="inline-flex items-center gap-1.5 text-amber-600 text-xs font-bold uppercase">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-600 text-xs font-bold uppercase rounded-full">
                         Low Stock
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1.5 text-red-600 text-xs font-bold uppercase">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-600 text-xs font-bold uppercase rounded-full">
                         Out of Stock
                       </span>
                     )}
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="h-9 px-3 rounded-xl text-indigo-600 hover:bg-indigo-50"
-                        onClick={() => handleOpenSale(product)}
-                        disabled={product.stock === 0 || isLoading}
-                      >
-                        <ShoppingCart className="h-4 w-4 mr-2" />
-                        Sell
-                      </Button>
-                      <div className="h-4 w-px bg-gray-100 mx-1" />
-                      <Button 
-                        variant="secondary" 
-                        size="sm" 
-                        className="h-9 w-9 p-0 rounded-xl"
-                        onClick={() => handleUpdateStock(product.id, product.stock, -1)}
-                        disabled={product.stock === 0 || isLoading}
-                      >
-                        <ArrowDown className="h-4 w-4" />
-                      </Button>
-                      <Button 
-                        variant="secondary" 
-                        size="sm" 
-                        className="h-9 w-9 p-0 rounded-xl"
-                        onClick={() => handleUpdateStock(product.id, product.stock, 1)}
-                        disabled={isLoading}
-                      >
-                        <ArrowUp className="h-4 w-4" />
-                      </Button>
-                    </div>
                   </td>
                 </tr>
               ))}
@@ -190,108 +120,6 @@ export const Inventory = () => {
         </div>
       </div>
 
-      <Modal
-        isOpen={isSaleModalOpen}
-        onClose={() => setIsSaleModalOpen(false)}
-        title="Record Sale"
-      >
-        {selectedProduct && (
-          <div className="space-y-6">
-            <div className="flex items-center gap-4 p-4 bg-indigo-50 rounded-2xl">
-              <div className="h-12 w-12 rounded-xl bg-white flex items-center justify-center text-indigo-600 font-bold">
-                {selectedProduct.name.charAt(0)}
-              </div>
-              <div>
-                <h4 className="font-bold text-gray-900">{selectedProduct.name}</h4>
-                <p className="text-sm text-gray-500">{formatCurrency(selectedProduct.price)} per unit</p>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-700">Quantity</span>
-                <div className="flex items-center gap-4">
-                  <Button 
-                    variant="secondary" 
-                    size="sm" 
-                    className="h-10 w-10 p-0 rounded-xl"
-                    onClick={() => setSaleQuantity(Math.max(1, saleQuantity - 1))}
-                  >
-                    <Minus className="h-4 w-4" />
-                  </Button>
-                  <span className="text-lg font-bold w-8 text-center">{saleQuantity}</span>
-                  <Button 
-                    variant="secondary" 
-                    size="sm" 
-                    className="h-10 w-10 p-0 rounded-xl"
-                    onClick={() => setSaleQuantity(Math.min(selectedProduct.stock, saleQuantity + 1))}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <span className="text-sm font-medium text-gray-700">Payment Method</span>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    onClick={() => setPaymentType('cash')}
-                    className={cn(
-                      "py-3 rounded-xl border-2 transition-all font-bold text-sm",
-                      paymentType === 'cash' 
-                        ? "border-indigo-600 bg-indigo-50 text-indigo-600" 
-                        : "border-gray-100 text-gray-500 hover:border-gray-200"
-                    )}
-                  >
-                    Cash
-                  </button>
-                  <button
-                    onClick={() => setPaymentType('debt')}
-                    className={cn(
-                      "py-3 rounded-xl border-2 transition-all font-bold text-sm",
-                      paymentType === 'debt' 
-                        ? "border-rose-600 bg-rose-50 text-rose-600" 
-                        : "border-gray-100 text-gray-500 hover:border-gray-200"
-                    )}
-                  >
-                    Utang (Debt)
-                  </button>
-                </div>
-              </div>
-
-              {paymentType === 'debt' && (
-                <Input 
-                  label="Customer Name" 
-                  placeholder="Who is borrowing?" 
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                />
-              )}
-
-              <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
-                <span className="text-gray-500 font-medium">Total Amount</span>
-                <span className="text-2xl font-bold text-indigo-600">
-                  {formatCurrency(selectedProduct.price * saleQuantity)}
-                </span>
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <Button variant="secondary" className="flex-1" onClick={() => setIsSaleModalOpen(false)}>
-                Cancel
-              </Button>
-              <Button 
-                className="flex-1" 
-                onClick={handleRecordSale}
-                isLoading={isLoading}
-                disabled={paymentType === 'debt' && !customerName}
-              >
-                Confirm Sale
-              </Button>
-            </div>
-          </div>
-        )}
-      </Modal>
     </div>
   );
 };

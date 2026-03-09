@@ -39,6 +39,7 @@ db.exec(`
     price REAL NOT NULL,
     stock INTEGER NOT NULL,
     imageUrl TEXT,
+    isDeleted INTEGER DEFAULT 0,
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
   );
 
@@ -65,6 +66,14 @@ db.exec(`
     value TEXT
   );
 `);
+
+// Migration: Add isDeleted to products if it doesn't exist
+try {
+  db.prepare("ALTER TABLE products ADD COLUMN isDeleted INTEGER DEFAULT 0").run();
+  console.log("Migration: Added isDeleted column to products table.");
+} catch (e) {
+  // Column probably already exists
+}
 
 // Seed Data
 const seedData = async () => {
@@ -116,7 +125,8 @@ const seedData = async () => {
 seedData();
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // Auth Middleware
 const authenticateToken = (req: any, res: any, next: any) => {
@@ -169,7 +179,7 @@ app.get("/api/auth/profile", authenticateToken, (req: any, res) => {
 
 // Products
 app.get("/api/products", authenticateToken, (req, res) => {
-  const products = db.prepare("SELECT * FROM products ORDER BY createdAt DESC").all();
+  const products = db.prepare("SELECT * FROM products WHERE isDeleted = 0 ORDER BY createdAt DESC").all();
   res.json(products);
 });
 
@@ -197,8 +207,21 @@ app.put("/api/products/:id", authenticateToken, (req, res) => {
 });
 
 app.delete("/api/products/:id", authenticateToken, (req, res) => {
-  db.prepare("DELETE FROM products WHERE id = ?").run(req.params.id);
-  res.json({ message: "Product deleted" });
+  try {
+    // Check if product has sales
+    const saleItem = db.prepare("SELECT id FROM sale_items WHERE productId = ? LIMIT 1").get(req.params.id);
+    
+    if (saleItem) {
+      // If it has sales, soft delete it to preserve history
+      db.prepare("UPDATE products SET isDeleted = 1 WHERE id = ?").run(req.params.id);
+    } else {
+      // If no sales, we can safely hard delete
+      db.prepare("DELETE FROM products WHERE id = ?").run(req.params.id);
+    }
+    res.json({ message: "Product deleted" });
+  } catch (error: any) {
+    res.status(500).json({ message: error.message });
+  }
 });
 
 // Sales

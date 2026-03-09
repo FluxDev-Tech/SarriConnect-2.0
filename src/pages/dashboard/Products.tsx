@@ -31,7 +31,9 @@ type ProductForm = z.infer<typeof productSchema>;
 export const Products = () => {
   const { products, fetchProducts, addProduct, updateProduct, deleteProduct, isLoading } = useStore();
   const [isModalOpen, setIsModalOpen] = React.useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
   const [editingProduct, setEditingProduct] = React.useState<any>(null);
+  const [productToDelete, setProductToDelete] = React.useState<any>(null);
   const [searchQuery, setSearchQuery] = React.useState('');
 
   const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<any>({
@@ -62,6 +64,19 @@ export const Products = () => {
     setValue('stock', product.stock);
     setValue('imageUrl', product.imageUrl || '');
     setIsModalOpen(true);
+  };
+
+  const handleDeleteClick = (product: any) => {
+    setProductToDelete(product);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (productToDelete) {
+      await deleteProduct(productToDelete.id);
+      setIsDeleteModalOpen(false);
+      setProductToDelete(null);
+    }
   };
 
   const filteredProducts = products.filter(p => 
@@ -116,7 +131,7 @@ export const Products = () => {
                 <Button variant="secondary" size="sm" onClick={() => handleEdit(product)} className="h-9 w-9 p-0 rounded-xl bg-white/90 backdrop-blur-sm">
                   <Edit2 className="h-4 w-4 text-indigo-600" />
                 </Button>
-                <Button variant="secondary" size="sm" onClick={() => deleteProduct(product.id)} className="h-9 w-9 p-0 rounded-xl bg-white/90 backdrop-blur-sm hover:bg-red-50">
+                <Button variant="secondary" size="sm" onClick={() => handleDeleteClick(product)} className="h-9 w-9 p-0 rounded-xl bg-white/90 backdrop-blur-sm hover:bg-red-50">
                   <Trash2 className="h-4 w-4 text-red-600" />
                 </Button>
               </div>
@@ -182,6 +197,38 @@ export const Products = () => {
             </Button>
           </div>
         </form>
+      </Modal>
+
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => { setIsDeleteModalOpen(false); setProductToDelete(null); }}
+        title="Confirm Deletion"
+      >
+        <div className="space-y-6">
+          <div className="flex items-center gap-4 p-4 bg-red-50 rounded-2xl text-red-700">
+            <div className="bg-red-100 p-2 rounded-xl">
+              <AlertTriangle className="h-6 w-6" />
+            </div>
+            <div>
+              <p className="font-bold">Are you sure?</p>
+              <p className="text-sm opacity-90">This action cannot be undone.</p>
+            </div>
+          </div>
+          
+          <p className="text-gray-600">
+            You are about to delete <span className="font-bold text-gray-900">{productToDelete?.name}</span>. 
+            This will permanently remove the product from your inventory.
+          </p>
+
+          <div className="flex gap-3 pt-2">
+            <Button variant="secondary" className="flex-1" onClick={() => setIsDeleteModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="secondary" className="flex-1 bg-red-600 text-white hover:bg-red-700 border-none" onClick={confirmDelete} isLoading={isLoading}>
+              Delete Product
+            </Button>
+          </div>
+        </div>
       </Modal>
     </div>
   );

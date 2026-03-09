@@ -168,7 +168,7 @@ export const Debts = () => {
             )}
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex gap-3 no-print">
             <Button variant="secondary" className="flex-1" onClick={() => setShowReceipt(false)}>
               Close
             </Button>

@@ -28,3 +28,37 @@ body {
 .glass {
   @apply bg-white/80 backdrop-blur-md border border-white/20;
 }
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .modal-content, .modal-content * {
+    visibility: visible;
+  }
+  .modal-content {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    box-shadow: none;
+    border: none;
+  }
+  /* Hide buttons in print */
+  button, .no-print {
+    display: none !important;
+  }
+  .print-no-padding {
+    padding: 0 !important;
+  }
+  .print-receipt {
+    border: none !important;
+    box-shadow: none !important;
+    padding: 20px !important;
+    width: 100% !important;
+    max-width: 300px !important; /* Standard thermal printer width */
+    margin: 0 auto !important;
+  }
+}

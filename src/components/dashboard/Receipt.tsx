@@ -23,7 +23,7 @@ export const Receipt: React.FC<ReceiptProps> = ({
   const d = new Date(date);
 
   return (
-    <div className="bg-white text-gray-900 p-8 shadow-inner min-h-[500px] flex flex-col font-mono text-sm border border-gray-100">
+    <div className="bg-white text-gray-900 p-8 shadow-inner min-h-[500px] flex flex-col font-mono text-sm border border-gray-100 print-receipt">
       {settings.showLogo && settings.logoUrl && (
         <div className="flex justify-center mb-6">
           <img src={settings.logoUrl} alt="Logo" className="h-16 w-16 object-contain" referrerPolicy="no-referrer" />

@@ -35,6 +35,7 @@ export const POS = () => {
   const [showSuccess, setShowSuccess] = React.useState(false);
   const [showReceipt, setShowReceipt] = React.useState(false);
   const [lastOrder, setLastOrder] = React.useState<any>(null);
+  const [activeTab, setActiveTab] = React.useState<'products' | 'cart'>('products');
 
   React.useEffect(() => {
     fetchProducts();
@@ -107,70 +108,115 @@ export const POS = () => {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-8 h-[calc(100vh-12rem)]">
+    <div className="flex flex-col lg:flex-row gap-8 lg:h-[calc(100vh-12rem)] relative">
+      {/* Mobile Tab Switcher */}
+      <div className="flex lg:hidden bg-white p-1 rounded-2xl border border-gray-100 shadow-sm mb-4">
+        <button 
+          onClick={() => setActiveTab('products')}
+          className={cn(
+            "flex-1 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2",
+            activeTab === 'products' ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100" : "text-gray-500"
+          )}
+        >
+          <Package className="h-4 w-4" />
+          Products
+        </button>
+        <button 
+          onClick={() => setActiveTab('cart')}
+          className={cn(
+            "flex-1 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 relative",
+            activeTab === 'cart' ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100" : "text-gray-500"
+          )}
+        >
+          <ShoppingCart className="h-4 w-4" />
+          Cart
+          {cart.length > 0 && (
+            <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] h-5 w-5 rounded-full flex items-center justify-center border-2 border-white">
+              {cart.length}
+            </span>
+          )}
+        </button>
+      </div>
+
       {/* Product Selection Area */}
-      <div className="flex-1 flex flex-col min-h-0">
-        <div className="mb-6">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">Point of Sale</h2>
-          <p className="text-gray-500">Select products to add to cart</p>
+      <div className={cn(
+        "flex-1 flex flex-col min-h-0",
+        activeTab !== 'products' && "hidden lg:flex"
+      )}>
+        <div className="mb-4 lg:mb-6">
+          <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-1 lg:mb-2">Point of Sale</h2>
+          <p className="text-sm lg:text-base text-gray-500">Select products to add to cart</p>
         </div>
 
-        <div className="relative mb-6">
+        <div className="relative mb-4 lg:mb-6">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
           <input
             type="text"
-            placeholder="Search products by name or barcode..."
-            className="w-full pl-12 pr-4 py-4 rounded-2xl border border-gray-100 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-lg"
+            placeholder="Search products..."
+            className="w-full pl-12 pr-4 py-3 lg:py-4 rounded-2xl border border-gray-100 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-base lg:text-lg"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
 
-        <div className="flex-1 overflow-y-auto pr-2 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
-          {filteredProducts.map((product) => (
-            <button
-              key={product.id}
-              onClick={() => addToCart(product)}
-              disabled={product.stock <= 0}
-              className={cn(
-                "flex flex-col bg-white p-4 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all text-left group relative",
-                product.stock <= 0 && "opacity-60 grayscale cursor-not-allowed"
-              )}
-            >
-              <div className="aspect-square rounded-xl bg-gray-50 mb-3 overflow-hidden flex items-center justify-center">
-                {product.imageUrl ? (
-                  <img 
-                    src={product.imageUrl} 
-                    alt={product.name} 
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                    referrerPolicy="no-referrer"
-                  />
-                ) : (
-                  <Package className="h-8 w-8 text-gray-300" />
+        <div className="flex-1 overflow-y-auto pr-2 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4 min-h-[400px] lg:min-h-0">
+          {filteredProducts.length === 0 ? (
+            <div className="col-span-full flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-dashed border-gray-200">
+              <Package className="h-12 w-12 text-gray-300 mb-4" />
+              <p className="text-gray-500 font-medium">No products found</p>
+              <Button variant="ghost" className="mt-2" onClick={() => setSearchQuery('')}>
+                Clear Search
+              </Button>
+            </div>
+          ) : (
+            filteredProducts.map((product) => (
+              <button
+                key={product.id}
+                onClick={() => addToCart(product)}
+                disabled={product.stock <= 0}
+                className={cn(
+                  "flex flex-col bg-white p-3 sm:p-4 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all text-left group relative",
+                  product.stock <= 0 && "opacity-60 grayscale cursor-not-allowed"
                 )}
-              </div>
-              <h3 className="font-bold text-gray-900 line-clamp-1 mb-1">{product.name}</h3>
-              <p className="text-indigo-600 font-bold mb-2">{formatCurrency(product.price)}</p>
-              <div className="mt-auto flex items-center justify-between">
-                <span className={cn(
-                  "text-[10px] font-bold px-2 py-0.5 rounded-full",
-                  product.stock <= 5 ? "bg-red-50 text-red-600" : "bg-gray-50 text-gray-500"
-                )}>
-                  Stock: {product.stock}
-                </span>
-              </div>
-              {product.stock > 0 && (
-                <div className="absolute top-2 right-2 bg-indigo-600 text-white p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Plus className="h-4 w-4" />
+              >
+                <div className="aspect-square rounded-xl bg-gray-50 mb-3 overflow-hidden flex items-center justify-center">
+                  {product.imageUrl ? (
+                    <img 
+                      src={product.imageUrl} 
+                      alt={product.name} 
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <Package className="h-8 w-8 text-gray-300" />
+                  )}
                 </div>
-              )}
-            </button>
-          ))}
+                <h3 className="font-bold text-gray-900 text-sm sm:text-base line-clamp-1 mb-1">{product.name}</h3>
+                <p className="text-indigo-600 font-bold mb-2">{formatCurrency(product.price)}</p>
+                <div className="mt-auto flex items-center justify-between">
+                  <span className={cn(
+                    "text-[10px] font-bold px-2 py-0.5 rounded-full",
+                    product.stock <= 5 ? "bg-red-50 text-red-600" : "bg-gray-50 text-gray-500"
+                  )}>
+                    Stock: {product.stock}
+                  </span>
+                </div>
+                {product.stock > 0 && (
+                  <div className="absolute top-2 right-2 bg-indigo-600 text-white p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Plus className="h-4 w-4" />
+                  </div>
+                )}
+              </button>
+            ))
+          )}
         </div>
       </div>
 
       {/* Cart Area */}
-      <div className="w-full lg:w-[400px] flex flex-col bg-white rounded-3xl border border-gray-100 shadow-xl overflow-hidden">
+      <div className={cn(
+        "w-full lg:w-[400px] flex flex-col bg-white rounded-3xl border border-gray-100 shadow-xl overflow-hidden lg:sticky lg:top-0 lg:h-full",
+        activeTab !== 'cart' && "hidden lg:flex"
+      )}>
         <div className="p-6 border-b border-gray-50 flex items-center justify-between bg-indigo-50/30">
           <div className="flex items-center gap-3">
             <div className="bg-indigo-600 p-2 rounded-xl">
@@ -316,10 +362,19 @@ export const POS = () => {
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 50 }}
-            className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 bg-emerald-600 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3"
+            className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 bg-emerald-600 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-6"
           >
-            <CheckCircle2 className="h-6 w-6" />
-            <span className="font-bold">Transaction recorded successfully!</span>
+            <div className="flex items-center gap-3">
+              <CheckCircle2 className="h-6 w-6" />
+              <span className="font-bold">Transaction recorded!</span>
+            </div>
+            <button 
+              onClick={() => setShowReceipt(true)}
+              className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-xl text-sm font-bold transition-colors flex items-center gap-2"
+            >
+              <Printer className="h-4 w-4" />
+              Print Receipt
+            </button>
           </motion.div>
         )}
       </AnimatePresence>
@@ -344,7 +399,7 @@ export const POS = () => {
             )}
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex gap-3 no-print">
             <Button variant="secondary" className="flex-1" onClick={() => setShowReceipt(false)}>
               Close
             </Button>

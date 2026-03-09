@@ -1,222 +1,197 @@
 import React from 'react';
 import { 
   Search, 
-  Plus, 
-  Minus, 
-  Trash2, 
-  ShoppingCart, 
+  Calendar, 
+  DollarSign, 
   CreditCard,
-  Receipt,
-  Scan
+  Users,
+  ArrowRight,
+  Filter,
+  Package,
+  Clock,
+  Banknote,
+  LayoutGrid
 } from 'lucide-react';
 import { useStore } from '../../store/useStore';
-import { Button } from '../../components/ui/Button';
 import { formatCurrency, cn } from '../../utils/helpers';
-import { motion, AnimatePresence } from 'motion/react';
+import { Button } from '../../components/ui/Button';
+import api from '../../services/api';
+import { Sale } from '../../types';
 
-export const Sales = () => {
-  const { products, fetchProducts, recordSale } = useStore();
-  const [cart, setCart] = React.useState<any[]>([]);
+export const SalesHistory = () => {
+  const [sales, setSales] = React.useState<Sale[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
   const [searchQuery, setSearchQuery] = React.useState('');
-  const [isProcessing, setIsProcessing] = React.useState(false);
+  const [activeTab, setActiveTab] = React.useState<'all' | 'cash' | 'debt'>('all');
+
+  const fetchSales = React.useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const res = await api.get('/sales');
+      setSales(res.data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   React.useEffect(() => {
-    fetchProducts();
-  }, [fetchProducts]);
+    fetchSales();
+  }, [fetchSales]);
 
-  const addToCart = (product: any) => {
-    if (product.stock <= 0) return;
-    
-    setCart(prev => {
-      const existing = prev.find(item => item.id === product.id);
-      if (existing) {
-        if (existing.quantity >= product.stock) return prev;
-        return prev.map(item => 
-          item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
-        );
-      }
-      return [...prev, { ...product, quantity: 1 }];
-    });
-  };
+  const filteredSales = sales.filter(s => {
+    const matchesSearch = s.customerName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         s.items?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesTab = activeTab === 'all' || s.paymentType === activeTab;
+    return matchesSearch && matchesTab;
+  });
 
-  const removeFromCart = (productId: number) => {
-    setCart(prev => prev.filter(item => item.id !== productId));
-  };
-
-  const updateQuantity = (productId: number, delta: number) => {
-    setCart(prev => prev.map(item => {
-      if (item.id === productId) {
-        const product = products.find(p => p.id === productId);
-        const newQty = item.quantity + delta;
-        if (newQty > 0 && (!product || newQty <= product.stock)) {
-          return { ...item, quantity: newQty };
-        }
-      }
-      return item;
-    }));
-  };
-
-  const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-
-  const handleCheckout = async () => {
-    if (cart.length === 0) return;
-    setIsProcessing(true);
-    try {
-      const items = cart.map(item => ({ id: item.id, quantity: item.quantity, price: item.price }));
-      await recordSale(items, total);
-      setCart([]);
-      alert('Sale recorded successfully!');
-    } catch (err) {
-      alert('Failed to record sale');
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
-  const filteredProducts = products.filter(p => 
-    p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    p.barcode?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredTotal = filteredSales.reduce((sum, s) => sum + s.totalPrice, 0);
+  const cashTotal = sales.filter(s => s.paymentType === 'cash').reduce((sum, s) => sum + s.totalPrice, 0);
+  const debtTotal = sales.filter(s => s.paymentType === 'debt').reduce((sum, s) => sum + s.totalPrice, 0);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-[calc(100vh-160px)]">
-      {/* Product Selection */}
-      <div className="lg:col-span-2 flex flex-col space-y-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-3xl font-bold text-gray-900">Point of Sale</h2>
-          <div className="relative w-72">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search products..."
-              className="w-full pl-10 pr-4 py-2.5 rounded-2xl border border-gray-100 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
+    <div className="space-y-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-3xl font-bold text-gray-900">Sales History</h2>
+          <p className="text-gray-500">View and track all your transactions</p>
         </div>
-
-        <div className="flex-1 overflow-y-auto pr-2">
-          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filteredProducts.map((product) => (
-              <motion.button
-                layout
-                key={product.id}
-                onClick={() => addToCart(product)}
-                disabled={product.stock <= 0}
-                className="group relative bg-white p-4 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md hover:border-indigo-200 transition-all text-left disabled:opacity-50 disabled:grayscale"
-              >
-                <div className="aspect-square bg-gray-50 rounded-2xl mb-3 flex items-center justify-center text-gray-300 group-hover:bg-indigo-50 group-hover:text-indigo-200 transition-colors">
-                  <ShoppingCart className="h-10 w-10" />
-                </div>
-                <h4 className="font-bold text-gray-900 truncate">{product.name}</h4>
-                <p className="text-sm text-gray-500 mb-2">{product.category}</p>
-                <div className="flex items-center justify-between">
-                  <span className="text-indigo-600 font-bold">{formatCurrency(product.price)}</span>
-                  <span className={cn(
-                    "text-xs font-bold px-2 py-0.5 rounded-full",
-                    product.stock <= 5 ? "bg-red-50 text-red-600" : "bg-emerald-50 text-emerald-600"
-                  )}>
-                    {product.stock} left
-                  </span>
-                </div>
-              </motion.button>
-            ))}
+        <div className="flex gap-3">
+          <div className="bg-emerald-50 px-4 py-2 rounded-2xl border border-emerald-100 flex items-center gap-3">
+            <div className="bg-emerald-600 p-1.5 rounded-lg">
+              <DollarSign className="h-4 w-4 text-white" />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Cash Total</p>
+              <p className="text-lg font-black text-emerald-700">{formatCurrency(cashTotal)}</p>
+            </div>
+          </div>
+          <div className="bg-rose-50 px-4 py-2 rounded-2xl border border-rose-100 flex items-center gap-3">
+            <div className="bg-rose-600 p-1.5 rounded-lg">
+              <Users className="h-4 w-4 text-white" />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-rose-600 uppercase tracking-wider">Utang Total</p>
+              <p className="text-lg font-black text-rose-700">{formatCurrency(debtTotal)}</p>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Cart / Checkout */}
-      <div className="bg-white rounded-3xl shadow-xl border border-gray-100 flex flex-col overflow-hidden">
-        <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-indigo-600">
-          <div className="flex items-center gap-3 text-white">
-            <ShoppingCart className="h-6 w-6" />
-            <h3 className="text-lg font-bold">Current Order</h3>
-          </div>
-          <span className="bg-white/20 text-white px-3 py-1 rounded-full text-xs font-bold">
-            {cart.length} items
-          </span>
+      <div className="flex flex-col md:flex-row gap-4 items-center">
+        <div className="relative flex-1 w-full">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Search by customer or items..."
+            className="w-full pl-12 pr-4 py-3 rounded-2xl border border-gray-100 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
         </div>
-
-        <div className="flex-1 overflow-y-auto p-6 space-y-4">
-          <AnimatePresence initial={false}>
-            {cart.map((item) => (
-              <motion.div
-                key={item.id}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="flex items-center gap-4 p-3 rounded-2xl bg-gray-50/50 border border-gray-100"
-              >
-                <div className="flex-1 min-w-0">
-                  <h5 className="font-bold text-gray-900 truncate">{item.name}</h5>
-                  <p className="text-xs text-indigo-600 font-bold">{formatCurrency(item.price)}</p>
-                </div>
-                <div className="flex items-center gap-2 bg-white rounded-xl border border-gray-100 p-1">
-                  <button 
-                    onClick={() => updateQuantity(item.id, -1)}
-                    className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
-                  >
-                    <Minus className="h-4 w-4 text-gray-500" />
-                  </button>
-                  <span className="w-6 text-center text-sm font-bold">{item.quantity}</span>
-                  <button 
-                    onClick={() => updateQuantity(item.id, 1)}
-                    className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
-                  >
-                    <Plus className="h-4 w-4 text-gray-500" />
-                  </button>
-                </div>
-                <button 
-                  onClick={() => removeFromCart(item.id)}
-                  className="p-2 text-gray-400 hover:text-red-500 transition-colors"
-                >
-                  <Trash2 className="h-5 w-5" />
-                </button>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-          {cart.length === 0 && (
-            <div className="h-full flex flex-col items-center justify-center text-center space-y-4 py-12">
-              <div className="p-4 bg-gray-50 rounded-full">
-                <ShoppingCart className="h-8 w-8 text-gray-300" />
-              </div>
-              <p className="text-gray-400 font-medium">Your cart is empty.<br/>Select products to start.</p>
-            </div>
-          )}
+        <div className="flex items-center gap-4 bg-white p-2 rounded-2xl border border-gray-100 shadow-sm">
+          <div className="px-4 border-r border-gray-100">
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Filtered Total</p>
+            <p className="text-lg font-black text-indigo-600">{formatCurrency(filteredTotal)}</p>
+          </div>
+          <div className="flex bg-white p-1.5 rounded-2xl border border-gray-100 shadow-sm w-full md:w-auto">
+          <button 
+            onClick={() => setActiveTab('all')}
+            className={cn(
+              "px-6 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2",
+              activeTab === 'all' ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100" : "text-gray-500 hover:bg-gray-50"
+            )}
+          >
+            <LayoutGrid className="h-4 w-4" />
+            All
+          </button>
+          <button 
+            onClick={() => setActiveTab('cash')}
+            className={cn(
+              "px-6 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2",
+              activeTab === 'cash' ? "bg-emerald-600 text-white shadow-lg shadow-emerald-100" : "text-gray-500 hover:bg-gray-50"
+            )}
+          >
+            <Banknote className="h-4 w-4" />
+            Cash
+          </button>
+          <button 
+            onClick={() => setActiveTab('debt')}
+            className={cn(
+              "px-6 py-2.5 rounded-xl text-sm font-bold transition-all flex items-center gap-2",
+              activeTab === 'debt' ? "bg-rose-600 text-white shadow-lg shadow-rose-100" : "text-gray-500 hover:bg-gray-50"
+            )}
+          >
+            <Clock className="h-4 w-4" />
+            Utang
+          </button>
         </div>
+        </div>
+      </div>
 
-        <div className="p-6 bg-gray-50 border-t border-gray-100 space-y-4">
-          <div className="space-y-2">
-            <div className="flex justify-between text-gray-500">
-              <span>Subtotal</span>
-              <span>{formatCurrency(total)}</span>
-            </div>
-            <div className="flex justify-between text-gray-500">
-              <span>Tax (0%)</span>
-              <span>{formatCurrency(0)}</span>
-            </div>
-            <div className="flex justify-between text-xl font-bold text-gray-900 pt-2 border-t border-gray-200">
-              <span>Total</span>
-              <span className="text-indigo-600">{formatCurrency(total)}</span>
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-3">
-            <Button variant="outline" className="h-12 border-gray-200 text-gray-600 hover:bg-white">
-              <Receipt className="mr-2 h-5 w-5" />
-              Receipt
-            </Button>
-            <Button 
-              className="h-12 shadow-lg shadow-indigo-200" 
-              disabled={cart.length === 0}
-              isLoading={isProcessing}
-              onClick={handleCheckout}
-            >
-              <CreditCard className="mr-2 h-5 w-5" />
-              Checkout
-            </Button>
-          </div>
+      <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-gray-50/50 border-b border-gray-100">
+                <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Date & Time</th>
+                <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Items</th>
+                <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Customer</th>
+                <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Type</th>
+                <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-right">Total</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-50">
+              {isLoading ? (
+                [1,2,3,4,5].map(i => (
+                  <tr key={i} className="animate-pulse">
+                    <td colSpan={5} className="px-6 py-4"><div className="h-8 bg-gray-100 rounded-xl w-full" /></td>
+                  </tr>
+                ))
+              ) : filteredSales.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-6 py-20 text-center">
+                    <div className="bg-gray-50 h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Clock className="h-8 w-8 text-gray-300" />
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900">No sales found</h3>
+                    <p className="text-gray-500">Try adjusting your filters or record a new sale.</p>
+                  </td>
+                </tr>
+              ) : (
+                filteredSales.map((sale) => (
+                  <tr key={sale.id} className="hover:bg-gray-50/50 transition-colors group">
+                    <td className="px-6 py-4">
+                      <div className="flex flex-col">
+                        <span className="font-bold text-gray-900">{new Date(sale.createdAt).toLocaleDateString()}</span>
+                        <span className="text-xs text-gray-400">{new Date(sale.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="text-sm text-gray-600 line-clamp-1 max-w-xs font-medium">{sale.items}</p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-sm font-bold text-gray-900">{sale.customerName || 'Walk-in'}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className={cn(
+                        "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider",
+                        sale.paymentType === 'cash' ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
+                      )}>
+                        {sale.paymentType === 'cash' ? <Banknote className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
+                        {sale.paymentType}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <span className="font-black text-gray-900">{formatCurrency(sale.totalPrice)}</span>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>

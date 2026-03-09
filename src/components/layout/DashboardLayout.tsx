@@ -23,14 +23,20 @@ const SidebarItem: React.FC<{ to: string, icon: any, label: string, active: bool
     to={to}
     onClick={onClick}
     className={cn(
-      "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group",
+      "flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all duration-300 group relative",
       active 
-        ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200" 
-        : "text-gray-500 hover:bg-indigo-50 hover:text-indigo-600"
+        ? "bg-brand-600 text-white shadow-xl shadow-brand-200/50" 
+        : "text-slate-500 hover:bg-brand-50 hover:text-brand-600"
     )}
   >
-    <Icon className={cn("h-5 w-5", active ? "text-white" : "group-hover:text-indigo-600")} />
-    <span className="font-medium">{label}</span>
+    <Icon className={cn("h-5 w-5 transition-transform duration-300", active ? "text-white" : "group-hover:scale-110 group-hover:text-brand-600")} />
+    <span className="font-semibold text-sm">{label}</span>
+    {active && (
+      <motion.div 
+        layoutId="active-pill"
+        className="absolute -left-1 w-1.5 h-6 bg-brand-400 rounded-full"
+      />
+    )}
   </Link>
 );
 
@@ -51,6 +57,7 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
   const menuItems = [
     { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/pos', icon: ShoppingCart, label: 'Point of Sale' },
+    { to: '/sales', icon: CreditCard, label: 'Sales History' },
     { to: '/products', icon: Package, label: 'Products' },
     { to: '/inventory', icon: BarChart3, label: 'Inventory' },
     { to: '/debts', icon: Users, label: 'Utang (Debts)' },
@@ -58,14 +65,17 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
   ];
 
   return (
-    <div className="flex h-screen bg-gray-50/50">
+    <div className="flex h-screen bg-[#F8FAFC]">
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-gray-100 flex flex-col p-6 hidden md:flex">
-        <div className="flex items-center gap-3 mb-10 px-2">
-          <div className="bg-indigo-600 p-2 rounded-lg">
+      <aside className="w-72 bg-white border-r border-slate-100 flex flex-col p-8 hidden lg:flex">
+        <div className="flex items-center gap-4 mb-12 px-2">
+          <div className="bg-brand-600 p-2.5 rounded-2xl shadow-lg shadow-brand-200">
             <Store className="h-6 w-6 text-white" />
           </div>
-          <h1 className="text-xl font-bold text-gray-900 tracking-tight">SariConnect</h1>
+          <div>
+            <h1 className="text-xl font-bold text-slate-900 tracking-tight leading-none">SariConnect</h1>
+            <p className="text-[10px] font-bold text-brand-500 uppercase tracking-widest mt-1">Store Manager</p>
+          </div>
         </div>
 
         <nav className="flex-1 space-y-2">
@@ -80,22 +90,22 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
           ))}
         </nav>
 
-        <div className="mt-auto pt-6 border-t border-gray-100">
-          <div className="flex items-center gap-3 px-2 mb-6">
-            <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold">
+        <div className="mt-auto pt-8 border-t border-slate-100">
+          <div className="bg-slate-50 p-4 rounded-3xl mb-6 flex items-center gap-3">
+            <div className="h-10 w-10 rounded-2xl bg-brand-100 flex items-center justify-center text-brand-700 font-bold text-lg shadow-sm">
               {user?.name.charAt(0)}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-gray-900 truncate">{user?.name}</p>
-              <p className="text-xs text-gray-500 truncate capitalize">{user?.role}</p>
+              <p className="text-sm font-bold text-slate-900 truncate">{user?.name}</p>
+              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{user?.role}</p>
             </div>
           </div>
           <button
             onClick={handleLogout}
-            className="flex items-center gap-3 w-full px-4 py-3 text-gray-500 hover:bg-red-50 hover:text-red-600 rounded-xl transition-all"
+            className="flex items-center gap-3 w-full px-4 py-3.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 rounded-2xl transition-all duration-300 group"
           >
-            <LogOut className="h-5 w-5" />
-            <span className="font-medium">Logout</span>
+            <LogOut className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+            <span className="font-bold text-sm">Logout</span>
           </button>
         </div>
       </aside>

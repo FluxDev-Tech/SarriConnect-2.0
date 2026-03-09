@@ -11,7 +11,10 @@ import {
   Package,
   Printer,
   Download,
-  X
+  X,
+  Banknote,
+  Clock,
+  ArrowRight
 } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import { formatCurrency, cn } from '../../utils/helpers';
@@ -108,215 +111,181 @@ export const POS = () => {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-8 lg:h-[calc(100vh-12rem)] relative">
-      {/* Mobile Tab Switcher */}
-      <div className="flex lg:hidden bg-white p-1 rounded-2xl border border-gray-100 shadow-sm mb-4">
-        <button 
-          onClick={() => setActiveTab('products')}
-          className={cn(
-            "flex-1 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2",
-            activeTab === 'products' ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100" : "text-gray-500"
-          )}
-        >
-          <Package className="h-4 w-4" />
-          Products
-        </button>
-        <button 
-          onClick={() => setActiveTab('cart')}
-          className={cn(
-            "flex-1 py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 relative",
-            activeTab === 'cart' ? "bg-indigo-600 text-white shadow-lg shadow-indigo-100" : "text-gray-500"
-          )}
-        >
-          <ShoppingCart className="h-4 w-4" />
-          Cart
-          {cart.length > 0 && (
-            <span className="absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] h-5 w-5 rounded-full flex items-center justify-center border-2 border-white">
-              {cart.length}
-            </span>
-          )}
-        </button>
-      </div>
-
-      {/* Product Selection Area */}
-      <div className={cn(
-        "flex-1 flex flex-col min-h-0",
-        activeTab !== 'products' && "hidden lg:flex"
-      )}>
-        <div className="mb-4 lg:mb-6">
-          <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-1 lg:mb-2">Point of Sale</h2>
-          <p className="text-sm lg:text-base text-gray-500">Select products to add to cart</p>
-        </div>
-
-        <div className="relative mb-4 lg:mb-6">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search products..."
-            className="w-full pl-12 pr-4 py-3 lg:py-4 rounded-2xl border border-gray-100 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-base lg:text-lg"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
-
-        <div className="flex-1 overflow-y-auto pr-2 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4 min-h-[400px] lg:min-h-0">
-          {filteredProducts.length === 0 ? (
-            <div className="col-span-full flex flex-col items-center justify-center py-20 bg-white rounded-3xl border border-dashed border-gray-200">
-              <Package className="h-12 w-12 text-gray-300 mb-4" />
-              <p className="text-gray-500 font-medium">No products found</p>
-              <Button variant="ghost" className="mt-2" onClick={() => setSearchQuery('')}>
-                Clear Search
-              </Button>
-            </div>
-          ) : (
-            filteredProducts.map((product) => (
-              <button
-                key={product.id}
-                onClick={() => addToCart(product)}
-                disabled={product.stock <= 0}
-                className={cn(
-                  "flex flex-col bg-white p-3 sm:p-4 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all text-left group relative",
-                  product.stock <= 0 && "opacity-60 grayscale cursor-not-allowed"
-                )}
-              >
-                <div className="aspect-square rounded-xl bg-gray-50 mb-3 overflow-hidden flex items-center justify-center">
-                  {product.imageUrl ? (
-                    <img 
-                      src={product.imageUrl} 
-                      alt={product.name} 
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                      referrerPolicy="no-referrer"
-                    />
-                  ) : (
-                    <Package className="h-8 w-8 text-gray-300" />
-                  )}
-                </div>
-                <h3 className="font-bold text-gray-900 text-sm sm:text-base line-clamp-1 mb-1">{product.name}</h3>
-                <p className="text-indigo-600 font-bold mb-2">{formatCurrency(product.price)}</p>
-                <div className="mt-auto flex items-center justify-between">
-                  <span className={cn(
-                    "text-[10px] font-bold px-2 py-0.5 rounded-full",
-                    product.stock <= 5 ? "bg-red-50 text-red-600" : "bg-gray-50 text-gray-500"
-                  )}>
-                    Stock: {product.stock}
-                  </span>
-                </div>
-                {product.stock > 0 && (
-                  <div className="absolute top-2 right-2 bg-indigo-600 text-white p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Plus className="h-4 w-4" />
-                  </div>
-                )}
-              </button>
-            ))
-          )}
-        </div>
-      </div>
-
-      {/* Cart Area */}
-      <div className={cn(
-        "w-full lg:w-[400px] flex flex-col bg-white rounded-3xl border border-gray-100 shadow-xl overflow-hidden lg:sticky lg:top-0 lg:h-full",
-        activeTab !== 'cart' && "hidden lg:flex"
-      )}>
-        <div className="p-6 border-b border-gray-50 flex items-center justify-between bg-indigo-50/30">
-          <div className="flex items-center gap-3">
-            <div className="bg-indigo-600 p-2 rounded-xl">
-              <ShoppingCart className="h-5 w-5 text-white" />
-            </div>
-            <h3 className="font-bold text-gray-900">Current Order</h3>
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 h-[calc(100vh-140px)]">
+      {/* Product Selection */}
+      <div className="lg:col-span-8 flex flex-col space-y-8">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div>
+            <h2 className="text-4xl font-black text-slate-900">POS Terminal</h2>
+            <p className="text-slate-500 font-medium">Select products to build an order</p>
           </div>
-          <span className="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-xs font-bold">
-            {cart.length} items
-          </span>
+          <div className="relative w-full md:w-96">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search by name, category or barcode..."
+              className="w-full pl-12 pr-4 py-4 rounded-[1.5rem] border border-slate-100 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all font-medium"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto pr-2 -mr-2 scroll-smooth">
+          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
+            <AnimatePresence mode="popLayout">
+              {filteredProducts.map((product) => (
+                <motion.button
+                  layout
+                  key={product.id}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  whileHover={{ y: -4 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => addToCart(product)}
+                  disabled={product.stock <= 0}
+                  className="group relative bg-white p-5 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl hover:border-brand-200 transition-all text-left disabled:opacity-50 disabled:grayscale flex flex-col h-full"
+                >
+                  <div className="aspect-square bg-slate-50 rounded-2xl mb-4 flex items-center justify-center text-slate-300 group-hover:bg-brand-50 group-hover:text-brand-200 transition-colors relative overflow-hidden">
+                    {product.imageUrl ? (
+                      <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                    ) : (
+                      <Package className="h-12 w-12" />
+                    )}
+                    {product.stock <= 5 && product.stock > 0 && (
+                      <div className="absolute top-2 right-2 bg-amber-500 text-white text-[10px] font-black px-2 py-1 rounded-lg shadow-lg">
+                        LOW STOCK
+                      </div>
+                    )}
+                  </div>
+                  <h4 className="font-bold text-slate-900 line-clamp-1 mb-1">{product.name}</h4>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-3">{product.category}</p>
+                  <div className="mt-auto flex items-center justify-between">
+                    <span className="text-brand-600 font-black text-lg">{formatCurrency(product.price)}</span>
+                    <div className={cn(
+                      "h-8 w-8 rounded-xl flex items-center justify-center transition-colors",
+                      product.stock <= 0 ? "bg-slate-100 text-slate-400" : "bg-brand-50 text-brand-600 group-hover:bg-brand-600 group-hover:text-white"
+                    )}>
+                      <Plus className="h-5 w-5" />
+                    </div>
+                  </div>
+                </motion.button>
+              ))}
+            </AnimatePresence>
+          </div>
+        </div>
+      </div>
+
+      {/* Cart / Checkout */}
+      <div className="lg:col-span-4 bento-card flex flex-col overflow-hidden shadow-2xl shadow-brand-900/5">
+        <div className="p-8 border-b border-slate-50 flex items-center justify-between bg-brand-600 text-white">
+          <div className="flex items-center gap-4">
+            <div className="bg-white/20 p-2.5 rounded-2xl">
+              <ShoppingCart className="h-6 w-6" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold leading-none">Order Details</h3>
+              <p className="text-brand-100 text-xs font-bold mt-1 uppercase tracking-widest">{cart.length} Items Selected</p>
+            </div>
+          </div>
+          <button 
+            onClick={() => setCart([])}
+            className="p-2 hover:bg-white/10 rounded-xl transition-colors"
+            title="Clear Cart"
+          >
+            <Trash2 className="h-5 w-5" />
+          </button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 space-y-4">
-          <AnimatePresence mode="popLayout">
-            {cart.length === 0 ? (
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="h-full flex flex-col items-center justify-center text-center py-12"
+          <AnimatePresence initial={false} mode="popLayout">
+            {cart.map((item) => (
+              <motion.div
+                key={item.id}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="flex items-center gap-4 p-4 rounded-3xl bg-slate-50/50 border border-slate-100 group"
               >
-                <div className="bg-gray-50 p-4 rounded-full mb-4">
-                  <ShoppingCart className="h-8 w-8 text-gray-300" />
+                <div className="h-12 w-12 rounded-xl bg-white border border-slate-100 flex items-center justify-center text-slate-300 overflow-hidden">
+                  {item.imageUrl ? <img src={item.imageUrl} className="w-full h-full object-cover" referrerPolicy="no-referrer" /> : <Package className="h-6 w-6" />}
                 </div>
-                <p className="text-gray-400 font-medium">Your cart is empty</p>
+                <div className="flex-1 min-w-0">
+                  <h5 className="font-bold text-slate-900 truncate">{item.name}</h5>
+                  <p className="text-xs text-brand-600 font-black">{formatCurrency(item.price)}</p>
+                </div>
+                <div className="flex items-center gap-2 bg-white rounded-2xl border border-slate-100 p-1 shadow-sm">
+                  <button 
+                    onClick={() => updateQuantity(item.id, -1)}
+                    className="p-1.5 hover:bg-slate-50 rounded-lg transition-colors text-slate-400 hover:text-brand-600"
+                  >
+                    <Minus className="h-4 w-4" />
+                  </button>
+                  <span className="w-6 text-center text-sm font-black text-slate-900">{item.quantity}</span>
+                  <button 
+                    onClick={() => updateQuantity(item.id, 1)}
+                    className="p-1.5 hover:bg-slate-50 rounded-lg transition-colors text-slate-400 hover:text-brand-600"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </button>
+                </div>
               </motion.div>
-            ) : (
-              cart.map((item) => (
-                <motion.div
-                  key={item.id}
-                  layout
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  className="flex items-center gap-4 p-3 rounded-2xl bg-gray-50/50 border border-gray-100 group"
-                >
-                  <div className="h-12 w-12 rounded-xl bg-white border border-gray-100 flex items-center justify-center overflow-hidden flex-shrink-0">
-                    {item.imageUrl ? (
-                      <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                    ) : (
-                      <Package className="h-5 w-5 text-gray-300" />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-bold text-gray-900 text-sm truncate">{item.name}</h4>
-                    <p className="text-xs text-indigo-600 font-bold">{formatCurrency(item.price)}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button 
-                      onClick={() => updateQuantity(item.id, -1)}
-                      className="h-7 w-7 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-500 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
-                    >
-                      <Minus className="h-3 w-3" />
-                    </button>
-                    <span className="text-sm font-bold w-4 text-center">{item.quantity}</span>
-                    <button 
-                      onClick={() => updateQuantity(item.id, 1)}
-                      className="h-7 w-7 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-500 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
-                    >
-                      <Plus className="h-3 w-3" />
-                    </button>
-                    <button 
-                      onClick={() => removeFromCart(item.id)}
-                      className="h-7 w-7 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-400 hover:bg-red-50 hover:text-red-600 transition-colors ml-1"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </button>
-                  </div>
-                </motion.div>
-              ))
-            )}
+            ))}
           </AnimatePresence>
+          {cart.length === 0 && (
+            <div className="h-full flex flex-col items-center justify-center text-center space-y-6 py-20">
+              <div className="w-24 h-24 bg-slate-50 rounded-[2.5rem] flex items-center justify-center relative">
+                <ShoppingCart className="h-10 w-10 text-slate-200" />
+                <div className="absolute -right-2 -top-2 w-8 h-8 bg-white rounded-full shadow-sm flex items-center justify-center">
+                  <Plus className="h-4 w-4 text-brand-400" />
+                </div>
+              </div>
+              <div>
+                <p className="text-slate-900 font-bold text-lg">Terminal Ready</p>
+                <p className="text-slate-400 font-medium text-sm mt-1">Select products from the left<br/>to begin checkout</p>
+              </div>
+            </div>
+          )}
         </div>
 
-        <div className="p-6 bg-gray-50/50 border-t border-gray-100 space-y-4">
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-gray-500 uppercase tracking-wider">Payment Method</label>
-            <div className="grid grid-cols-2 gap-3">
+        <div className="p-8 bg-slate-50/80 backdrop-blur-md border-t border-slate-100 space-y-6">
+          <div className="space-y-4">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Payment Method</label>
+            <div className="grid grid-cols-2 gap-4">
               <button
                 onClick={() => setPaymentType('cash')}
                 className={cn(
-                  "flex items-center justify-center gap-2 py-3 rounded-xl border-2 transition-all font-bold text-sm",
+                  "flex flex-col items-center justify-center gap-3 py-5 rounded-[1.5rem] border-2 transition-all group relative overflow-hidden",
                   paymentType === 'cash' 
-                    ? "border-indigo-600 bg-indigo-50 text-indigo-600" 
-                    : "border-white bg-white text-gray-500 hover:border-gray-200 shadow-sm"
+                    ? "border-emerald-500 bg-white text-emerald-700 shadow-xl shadow-emerald-100" 
+                    : "border-transparent bg-white/50 text-slate-400 hover:bg-white hover:border-slate-200"
                 )}
               >
-                <CreditCard className="h-4 w-4" />
-                Cash
+                <div className={cn(
+                  "p-2.5 rounded-xl transition-all duration-300",
+                  paymentType === 'cash' ? "bg-emerald-500 text-white scale-110" : "bg-slate-100 text-slate-400 group-hover:scale-110"
+                )}>
+                  <Banknote className="h-5 w-5" />
+                </div>
+                <span className="font-bold text-xs uppercase tracking-wider">Cash</span>
               </button>
               <button
                 onClick={() => setPaymentType('debt')}
                 className={cn(
-                  "flex items-center justify-center gap-2 py-3 rounded-xl border-2 transition-all font-bold text-sm",
+                  "flex flex-col items-center justify-center gap-3 py-5 rounded-[1.5rem] border-2 transition-all group relative overflow-hidden",
                   paymentType === 'debt' 
-                    ? "border-rose-600 bg-rose-50 text-rose-600" 
-                    : "border-white bg-white text-gray-500 hover:border-gray-200 shadow-sm"
+                    ? "border-rose-500 bg-white text-rose-700 shadow-xl shadow-rose-100" 
+                    : "border-transparent bg-white/50 text-slate-400 hover:bg-white hover:border-slate-200"
                 )}
               >
-                <UserIcon className="h-4 w-4" />
-                Utang
+                <div className={cn(
+                  "p-2.5 rounded-xl transition-all duration-300",
+                  paymentType === 'debt' ? "bg-rose-500 text-white scale-110" : "bg-slate-100 text-slate-400 group-hover:scale-110"
+                )}>
+                  <Clock className="h-5 w-5" />
+                </div>
+                <span className="font-bold text-xs uppercase tracking-wider">Utang</span>
               </button>
             </div>
           </div>
@@ -324,33 +293,34 @@ export const POS = () => {
           <AnimatePresence>
             {paymentType === 'debt' && (
               <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 10 }}
               >
                 <Input 
                   label="Customer Name" 
                   placeholder="Who is borrowing?" 
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
-                  className="bg-white"
+                  className="bg-white rounded-2xl h-12 border-slate-200"
                 />
               </motion.div>
             )}
           </AnimatePresence>
 
-          <div className="pt-4 border-t border-gray-200 flex items-center justify-between">
-            <span className="text-gray-500 font-bold">Total Amount</span>
-            <span className="text-3xl font-black text-indigo-600">{formatCurrency(totalAmount)}</span>
+          <div className="pt-6 border-t border-slate-200 flex items-center justify-between">
+            <span className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">Total Payable</span>
+            <span className="text-4xl font-black text-brand-600 tracking-tighter">{formatCurrency(totalAmount)}</span>
           </div>
 
           <Button 
-            className="w-full h-14 text-lg shadow-xl shadow-indigo-100" 
+            className="w-full h-16 text-lg font-black rounded-[1.5rem] bg-brand-600 hover:bg-brand-700 shadow-2xl shadow-brand-200/50" 
             disabled={cart.length === 0 || (paymentType === 'debt' && !customerName)}
             onClick={handleCheckout}
             isLoading={isLoading}
           >
-            Complete Transaction
+            Complete Order
+            <ArrowRight className="ml-3 h-6 w-6" />
           </Button>
         </div>
       </div>
@@ -362,15 +332,20 @@ export const POS = () => {
             initial={{ opacity: 0, y: 50 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 50 }}
-            className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 bg-emerald-600 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-6"
+            className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 bg-emerald-600 text-white px-8 py-5 rounded-[2rem] shadow-2xl flex items-center gap-8 border border-white/20 backdrop-blur-md"
           >
-            <div className="flex items-center gap-3">
-              <CheckCircle2 className="h-6 w-6" />
-              <span className="font-bold">Transaction recorded!</span>
+            <div className="flex items-center gap-4">
+              <div className="bg-white/20 p-2 rounded-xl">
+                <CheckCircle2 className="h-6 w-6" />
+              </div>
+              <div>
+                <p className="font-black text-lg leading-none">Order Successful!</p>
+                <p className="text-emerald-100 text-xs font-bold mt-1 uppercase tracking-widest">Transaction Recorded</p>
+              </div>
             </div>
             <button 
               onClick={() => setShowReceipt(true)}
-              className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-xl text-sm font-bold transition-colors flex items-center gap-2"
+              className="bg-white text-emerald-600 hover:bg-emerald-50 px-6 py-3 rounded-xl text-sm font-black transition-all flex items-center gap-2 shadow-lg"
             >
               <Printer className="h-4 w-4" />
               Print Receipt
@@ -385,8 +360,8 @@ export const POS = () => {
         onClose={() => setShowReceipt(false)}
         title="Transaction Receipt"
       >
-        <div className="space-y-6">
-          <div className="bg-gray-100 p-4 rounded-3xl overflow-hidden">
+        <div className="space-y-8">
+          <div className="bg-slate-50 p-8 rounded-[2.5rem] overflow-hidden border border-slate-100">
             {lastOrder && receiptSettings && (
               <Receipt 
                 settings={receiptSettings}
@@ -399,12 +374,19 @@ export const POS = () => {
             )}
           </div>
 
-          <div className="flex gap-3 no-print">
-            <Button variant="secondary" className="flex-1" onClick={() => setShowReceipt(false)}>
+          <div className="flex gap-4 no-print">
+            <Button 
+              variant="secondary" 
+              className="flex-1 h-14 rounded-2xl font-bold" 
+              onClick={() => setShowReceipt(false)}
+            >
               Close
             </Button>
-            <Button className="flex-1" onClick={() => window.print()}>
-              <Printer className="mr-2 h-5 w-5" />
+            <Button 
+              className="flex-1 h-14 rounded-2xl font-bold bg-brand-600 hover:bg-brand-700" 
+              onClick={() => window.print()}
+            >
+              <Printer className="mr-3 h-5 w-5" />
               Print Receipt
             </Button>
           </div>

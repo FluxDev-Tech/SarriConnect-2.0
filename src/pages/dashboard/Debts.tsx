@@ -7,7 +7,9 @@ import {
   CheckCircle2,
   AlertCircle,
   ArrowRight,
-  Printer
+  Printer,
+  Clock,
+  Banknote
 } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import { formatCurrency, cn } from '../../utils/helpers';
@@ -105,20 +107,26 @@ export const Debts = () => {
           </div>
         ) : (
           filteredDebts.map((debt) => (
-            <div key={debt.id} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row md:items-center justify-between gap-6 group">
+            <div key={debt.id} className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row md:items-center justify-between gap-6 group relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-1 h-full bg-rose-500" />
               <div className="flex items-center gap-4">
-                <div className="h-14 w-14 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-colors">
-                  <UserIcon className="h-7 w-7" />
+                <div className="h-14 w-14 rounded-2xl bg-rose-50 flex items-center justify-center text-rose-600 group-hover:bg-rose-600 group-hover:text-white transition-colors">
+                  <Clock className="h-7 w-7" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-bold text-gray-900">{debt.customerName}</h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-bold text-gray-900">{debt.customerName}</h3>
+                    <span className="px-2 py-0.5 rounded-full bg-rose-50 text-rose-600 text-[10px] font-bold uppercase tracking-wider border border-rose-100">
+                      Unpaid Utang
+                    </span>
+                  </div>
                   <div className="flex items-center gap-3 text-sm text-gray-500 mt-1">
                     <span className="flex items-center gap-1">
                       <Calendar className="h-3.5 w-3.5" />
                       {new Date(debt.createdAt).toLocaleDateString()}
                     </span>
                     <span className="h-1 w-1 rounded-full bg-gray-300" />
-                    <span className="line-clamp-1 max-w-[200px]">{debt.items}</span>
+                    <span className="line-clamp-1 max-w-[200px] font-medium italic">{debt.items}</span>
                   </div>
                 </div>
               </div>
@@ -126,14 +134,14 @@ export const Debts = () => {
               <div className="flex items-center justify-between md:justify-end gap-8">
                 <div className="text-right">
                   <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Amount Owed</p>
-                  <p className="text-xl font-black text-rose-600">{formatCurrency(debt.totalPrice)}</p>
+                  <p className="text-2xl font-black text-rose-600">{formatCurrency(debt.totalPrice)}</p>
                 </div>
                 <Button 
                   onClick={() => handleMarkAsPaid(debt)}
-                  className="bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-100"
+                  className="bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-100 h-12 px-6"
                 >
+                  <Banknote className="mr-2 h-4 w-4" />
                   Mark as Paid
-                  <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </div>
             </div>

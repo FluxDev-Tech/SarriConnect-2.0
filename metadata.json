@@ -1,0 +1,7 @@
+{
+  "name": "SariConnect Pro",
+  "description": "A modern Sari-Sari Store Management System for small businesses.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

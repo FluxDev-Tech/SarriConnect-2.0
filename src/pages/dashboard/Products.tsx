@@ -13,13 +13,15 @@ import {
   Upload,
   LayoutGrid,
   List,
-  X as CloseIcon
+  X as CloseIcon,
+  Scan
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useStore } from '../../store/useStore';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
+import { BarcodeScanner } from '../../components/dashboard/BarcodeScanner';
 import { formatCurrency, cn } from '../../utils/helpers';
 
 const productSchema = z.object({
@@ -43,6 +45,8 @@ export const Products = () => {
   const [isUploading, setIsUploading] = React.useState(false);
   const [viewMode, setViewMode] = React.useState<'grid' | 'list'>('grid');
   const [categoryFilter, setCategoryFilter] = React.useState('All');
+  const [isScanning, setIsScanning] = React.useState(false);
+  const [scanTarget, setScanTarget] = React.useState<'search' | 'form'>('search');
 
   const { register, handleSubmit, reset, setValue, watch, formState: { errors } } = useForm<any>({
     resolver: zodResolver(productSchema),
@@ -116,8 +120,27 @@ export const Products = () => {
     return matchesSearch && matchesCategory;
   });
 
+  const handleScan = (barcode: string) => {
+    if (scanTarget === 'search') {
+      setSearchQuery(barcode);
+    } else {
+      setValue('barcode', barcode);
+    }
+    setIsScanning(false);
+  };
+
   return (
     <div className="space-y-10">
+      <AnimatePresence>
+        {isScanning && (
+          <BarcodeScanner 
+            onScan={handleScan} 
+            onClose={() => setIsScanning(false)} 
+            products={products}
+          />
+        )}
+      </AnimatePresence>
+
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h2 className="text-4xl font-black text-slate-900">Inventory</h2>
@@ -134,15 +157,24 @@ export const Products = () => {
 
       <div className="flex flex-col lg:flex-row gap-6">
         <div className="flex-1 flex flex-col md:flex-row gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search products..."
-              className="w-full pl-12 pr-4 py-4 rounded-2xl border border-slate-100 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all font-medium"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+          <div className="relative flex-1 flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+              <input
+                type="text"
+                placeholder="Search products..."
+                className="w-full pl-12 pr-4 py-4 rounded-2xl border border-slate-100 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all font-medium"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <button
+              onClick={() => { setScanTarget('search'); setIsScanning(true); }}
+              className="p-4 bg-white border border-slate-100 rounded-2xl shadow-sm text-slate-400 hover:text-brand-600 hover:bg-brand-50 transition-all"
+              title="Scan Barcode"
+            >
+              <Scan className="h-6 w-6" />
+            </button>
           </div>
           <div className="flex items-center gap-2 bg-white p-1 rounded-2xl border border-slate-100 shadow-sm overflow-x-auto">
             {categories.map(cat => (
@@ -364,7 +396,16 @@ export const Products = () => {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <Input label="Barcode (Optional)" {...register('barcode')} error={errors.barcode?.message} className="rounded-2xl h-12" />
+            <div className="relative">
+              <Input label="Barcode (Optional)" {...register('barcode')} error={errors.barcode?.message} className="rounded-2xl h-12 pr-12" />
+              <button
+                type="button"
+                onClick={() => { setScanTarget('form'); setIsScanning(true); }}
+                className="absolute right-3 top-[34px] p-1.5 text-slate-400 hover:text-brand-600 transition-colors"
+              >
+                <Scan className="h-5 w-5" />
+              </button>
+            </div>
             <Input label="Category" {...register('category')} error={errors.category?.message} className="rounded-2xl h-12" />
           </div>
           <div className="grid grid-cols-2 gap-4">

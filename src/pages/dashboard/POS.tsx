@@ -16,7 +16,8 @@ import {
   Clock,
   ArrowRight,
   LayoutDashboard,
-  Menu
+  Menu,
+  Scan
 } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import { formatCurrency, cn } from '../../utils/helpers';
@@ -24,6 +25,7 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Modal } from '../../components/ui/Modal';
 import { Receipt } from '../../components/dashboard/Receipt';
+import { BarcodeScanner } from '../../components/dashboard/BarcodeScanner';
 import { Product } from '../../types';
 import { motion, AnimatePresence } from 'motion/react';
 
@@ -47,6 +49,7 @@ export const POS = () => {
   const [lastOrder, setLastOrder] = React.useState<any>(null);
   const [activeTab, setActiveTab] = React.useState<'products' | 'cart'>('products');
   const [viewMode, setViewMode] = React.useState<'grid' | 'list'>('grid');
+  const [isScanning, setIsScanning] = React.useState(false);
   const searchInputRef = React.useRef<HTMLInputElement>(null);
 
   const playSound = (type: 'add' | 'success' | 'click') => {
@@ -179,8 +182,36 @@ export const POS = () => {
     }
   };
 
+  const handleScan = (barcode: string) => {
+    setSearchQuery(barcode);
+    setIsScanning(false);
+    // The auto-add logic in useEffect will handle adding the product if it's an exact match
+  };
+
+  const handleQuickSale = async (product: Product) => {
+    if (product.stock <= 0) return;
+    const items = [{ id: product.id, quantity: 1, price: product.price }];
+    try {
+      await recordSale(items, product.price, product.price, 0, 'cash', 'Quick Scan Sale');
+      playSound('success');
+    } catch (error) {
+      console.error('Quick sale failed:', error);
+    }
+  };
+
   return (
     <div className="flex flex-col lg:grid lg:grid-cols-12 gap-8 h-[calc(100vh-100px)] lg:h-[calc(100vh-140px)] relative">
+      <AnimatePresence>
+        {isScanning && (
+          <BarcodeScanner 
+            onScan={handleScan} 
+            onClose={() => setIsScanning(false)} 
+            products={products}
+            onQuickSale={handleQuickSale}
+          />
+        )}
+      </AnimatePresence>
+
       {/* Mobile Tab Toggle */}
       <div className="lg:hidden flex bg-white p-1 rounded-2xl border border-slate-100 shadow-sm mb-2">
         <button
@@ -222,24 +253,33 @@ export const POS = () => {
               <p className="text-slate-500 font-medium text-sm">Build an order by selecting items</p>
             </div>
             <div className="flex items-center gap-3 w-full md:w-auto">
-              <div className="relative flex-1 md:w-80">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  placeholder="Search or scan..."
-                  className="w-full pl-10 pr-10 py-3 rounded-2xl border border-slate-100 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all font-medium text-sm"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                {searchQuery && (
-                  <button 
-                    onClick={() => setSearchQuery('')}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-100 rounded-full transition-colors"
-                  >
-                    <X className="h-3 w-3 text-slate-400" />
-                  </button>
-                )}
+              <div className="relative flex-1 md:w-80 flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <input
+                    ref={searchInputRef}
+                    type="text"
+                    placeholder="Search or scan..."
+                    className="w-full pl-10 pr-10 py-3 rounded-2xl border border-slate-100 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all font-medium text-sm"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                  {searchQuery && (
+                    <button 
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-100 rounded-full transition-colors"
+                    >
+                      <X className="h-3 w-3 text-slate-400" />
+                    </button>
+                  )}
+                </div>
+                <button
+                  onClick={() => setIsScanning(true)}
+                  className="p-3 bg-white border border-slate-100 rounded-2xl shadow-sm text-slate-400 hover:text-brand-600 hover:bg-brand-50 transition-all"
+                  title="Scan Barcode"
+                >
+                  <Scan className="h-5 w-5" />
+                </button>
               </div>
               <div className="flex bg-white p-1 rounded-xl border border-slate-100 shadow-sm">
                 <button

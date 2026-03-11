@@ -11,9 +11,7 @@ import {
   Minus,
   Users,
   Banknote,
-  Clock,
-  Store,
-  ArrowRight
+  Clock
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { 
@@ -120,12 +118,17 @@ const StatCard = ({ title, value, icon: Icon, trend, color, delay = 0 }: any) =>
 
 export const Dashboard = () => {
   const navigate = useNavigate();
-  const { stats, fetchStats, fetchProducts } = useStore();
+  const { stats, fetchStats, fetchProducts, products } = useStore();
 
   React.useEffect(() => {
     fetchStats();
     fetchProducts();
   }, [fetchStats, fetchProducts]);
+
+  const lowStockCount = products.filter(p => p.stock <= 5).length;
+  const avgOrderValue = stats ? (stats.totalRevenue / (stats.totalSalesCount || 1)) : 0;
+
+  const COLORS = ['#3354ff', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6', '#06b6d4'];
 
   if (!stats) return <div className="animate-pulse space-y-8">
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -152,33 +155,38 @@ export const Dashboard = () => {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard 
-          title="Cash Sales" 
-          value={formatCurrency(stats.cashRevenue)} 
-          icon={Banknote} 
-          color="bg-emerald-500"
+          title="Total Sales" 
+          value={stats.totalSalesCount} 
+          icon={ShoppingCart} 
+          color="bg-brand-500"
+          trend={12}
           delay={0.1}
         />
         <StatCard 
-          title="Utang (Debts)" 
-          value={formatCurrency(stats.debtRevenue)} 
-          icon={Clock} 
-          color="bg-rose-500"
+          title="Avg. Order Value" 
+          value={formatCurrency(avgOrderValue)} 
+          icon={DollarSign} 
+          color="bg-emerald-500"
+          trend={5}
           delay={0.2}
         />
         <StatCard 
-          title="Total Revenue" 
+          title="Revenue" 
           value={formatCurrency(stats.totalRevenue)} 
           icon={TrendingUp} 
-          color="bg-brand-500"
+          color="bg-indigo-500"
+          trend={8}
           delay={0.3}
         />
-        <StatCard 
-          title="Inventory" 
-          value={stats.totalProducts} 
-          icon={Package} 
-          color="bg-amber-500"
-          delay={0.4}
-        />
+        <Link to="/inventory" className="block">
+          <StatCard 
+            title="Low Stock Items" 
+            value={lowStockCount} 
+            icon={AlertTriangle} 
+            color={lowStockCount > 0 ? "bg-rose-500" : "bg-slate-400"}
+            delay={0.4}
+          />
+        </Link>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -266,14 +274,15 @@ export const Dashboard = () => {
         </motion.div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 gap-8">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7 }}
           className="bento-card p-8"
         >
-          <h3 className="text-xl font-bold text-slate-900 mb-8">Top Selling Products</h3>
+          <h3 className="text-xl font-bold text-slate-900 mb-2">Top Selling Products</h3>
+          <p className="text-sm text-slate-400 font-medium mb-8">Most popular items by volume</p>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={stats.topProducts} layout="vertical" margin={{ left: 20 }}>
@@ -284,47 +293,20 @@ export const Dashboard = () => {
                   axisLine={false} 
                   tickLine={false} 
                   tick={{fontSize: 11, fill: '#64748b', fontWeight: 600}} 
-                  width={120} 
+                  width={100} 
                 />
                 <Tooltip 
                   cursor={{fill: '#f8fafc'}}
                   contentStyle={{ borderRadius: '20px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                 />
-                <Bar dataKey="totalSold" radius={[0, 12, 12, 0]} barSize={24}>
+                <Bar dataKey="totalSold" radius={[0, 12, 12, 0]} barSize={20}>
                   {stats.topProducts.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={['#3354ff', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6'][index % 5]} />
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
-        </motion.div>
-
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.8 }}
-          className="bento-card p-8 bg-brand-600 text-white relative overflow-hidden group"
-        >
-          <div className="relative z-10 h-full flex flex-col">
-            <div className="bg-white/20 w-14 h-14 rounded-2xl flex items-center justify-center mb-6">
-              <Store className="h-8 w-8" />
-            </div>
-            <h3 className="text-3xl font-black mb-4 leading-tight">Ready to serve<br/>your customers?</h3>
-            <p className="text-brand-100 font-medium mb-8 max-w-[280px]">Quickly record sales, manage inventory, and track customer debts in one place.</p>
-            <div className="mt-auto">
-              <Button 
-                onClick={() => navigate('/pos')}
-                className="bg-white text-brand-600 hover:bg-brand-50 h-14 px-8 rounded-2xl font-bold text-base shadow-xl shadow-black/10"
-              >
-                Launch POS Terminal
-                <ArrowRight className="ml-3 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-              </Button>
-            </div>
-          </div>
-          {/* Decorative elements */}
-          <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-white/10 rounded-full blur-3xl" />
-          <div className="absolute right-10 top-10 w-32 h-32 bg-brand-400/20 rounded-full blur-2xl" />
         </motion.div>
       </div>
     </div>

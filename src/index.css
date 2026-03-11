@@ -49,6 +49,33 @@ h1, h2, h3, h4, .font-display {
   @apply bg-white rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300;
 }
 
+/* Barcode Scanner Overrides */
+#reader {
+  border: none !important;
+}
+#reader video {
+  @apply rounded-2xl;
+}
+#reader__dashboard_section_csr button {
+  @apply px-4 py-2 bg-brand-600 text-white rounded-xl font-bold text-xs uppercase tracking-wider hover:bg-brand-700 transition-all shadow-lg shadow-brand-100 mt-4;
+}
+#reader__status_span {
+  @apply text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2 block;
+}
+#reader__camera_selection {
+  @apply w-full px-4 py-2 rounded-xl border border-slate-200 text-sm font-medium focus:ring-2 focus:ring-brand-500 outline-none mt-2;
+}
+
+@keyframes scan-line {
+  0% { transform: translateY(-100px); opacity: 0; }
+  50% { opacity: 1; }
+  100% { transform: translateY(100px); opacity: 0; }
+}
+
+.animate-scan-line {
+  animation: scan-line 2s linear infinite;
+}
+
 .stat-card-glow {
   @apply relative overflow-hidden;
 }

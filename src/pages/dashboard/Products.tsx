@@ -120,7 +120,7 @@ export const Products = () => {
     <div className="space-y-10">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h2 className="text-4xl font-black text-slate-900">Inventory</h2>
+          <h2 className="text-4xl font-black text-slate-900">Products</h2>
           <p className="text-slate-500 font-medium mt-1">Manage your store products and stock levels</p>
         </div>
         <Button 
@@ -195,16 +195,16 @@ export const Products = () => {
                       <Package className="h-16 w-16" />
                     </div>
                   )}
-                  <div className="absolute top-4 right-4 flex flex-col gap-2 opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all duration-300">
+                  <div className="absolute top-4 right-4 flex flex-col gap-2 translate-x-0 transition-all duration-300">
                     <button 
                       onClick={() => handleEdit(product)}
-                      className="p-2.5 bg-white text-slate-600 rounded-xl shadow-xl hover:bg-brand-600 hover:text-white transition-all"
+                      className="p-2.5 bg-white/90 backdrop-blur-md text-slate-600 rounded-xl shadow-xl hover:bg-brand-600 hover:text-white transition-all border border-white/20"
                     >
                       <Edit2 className="h-4 w-4" />
                     </button>
                     <button 
                       onClick={() => handleDeleteClick(product)}
-                      className="p-2.5 bg-white text-rose-600 rounded-xl shadow-xl hover:bg-rose-600 hover:text-white transition-all"
+                      className="p-2.5 bg-white/90 backdrop-blur-md text-rose-600 rounded-xl shadow-xl hover:bg-rose-600 hover:text-white transition-all border border-white/20"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -279,11 +279,19 @@ export const Products = () => {
                     </span>
                   </td>
                   <td className="px-8 py-5 text-right">
-                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => handleEdit(product)} className="p-2 hover:bg-brand-50 hover:text-brand-600 rounded-lg transition-colors">
+                    <div className="flex items-center justify-end gap-2 transition-opacity">
+                      <button 
+                        onClick={() => handleEdit(product)} 
+                        className="p-2.5 bg-slate-50 text-slate-600 hover:bg-brand-600 hover:text-white rounded-xl transition-all"
+                        title="Edit Product"
+                      >
                         <Edit2 className="h-4 w-4" />
                       </button>
-                      <button onClick={() => handleDeleteClick(product)} className="p-2 hover:bg-rose-50 hover:text-rose-600 rounded-lg transition-colors">
+                      <button 
+                        onClick={() => handleDeleteClick(product)} 
+                        className="p-2.5 bg-slate-50 text-rose-600 hover:bg-rose-600 hover:text-white rounded-xl transition-all"
+                        title="Delete Product"
+                      >
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </div>

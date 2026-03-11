@@ -1,6 +1,6 @@
 import React from 'react';
-import { Html5QrcodeScanner, Html5QrcodeSupportedFormats } from 'html5-qrcode';
-import { X, Zap, Info, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
+import { X, Zap, Info, CheckCircle2, AlertCircle, RefreshCw, Camera } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Product } from '../../types';
 import { formatCurrency } from '../../utils/helpers';
@@ -16,56 +16,156 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, onClose,
   const [lastScanned, setLastScanned] = React.useState<Product | null>(null);
   const [isProcessing, setIsProcessing] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [facingMode, setFacingMode] = React.useState<'environment' | 'user'>('environment');
+  const [isScannerReady, setIsScannerReady] = React.useState(false);
+  const [isFlashing, setIsFlashing] = React.useState(false);
+  const scannerRef = React.useRef<Html5Qrcode | null>(null);
+  const transitionLock = React.useRef(false);
+
+  const playBeep = React.useCallback(() => {
+    // Trigger visual flash
+    setIsFlashing(true);
+    setTimeout(() => setIsFlashing(false), 150);
+
+    try {
+      const AudioContextClass = (window.AudioContext || (window as any).webkitAudioContext);
+      if (!AudioContextClass) return;
+      
+      const audioCtx = new AudioContextClass();
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // High pitch beep
+      gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+
+      oscillator.start();
+      oscillator.stop(audioCtx.currentTime + 0.1);
+      
+      // Close context after sound finishes to save resources
+      setTimeout(() => audioCtx.close(), 200);
+    } catch (e) {
+      console.warn('Audio beep failed:', e);
+    }
+  }, []);
+
+  const startScanner = React.useCallback(async (mode: 'environment' | 'user', retryCount = 0) => {
+    if (transitionLock.current) {
+      if (retryCount < 5) {
+        setTimeout(() => startScanner(mode, retryCount + 1), 200);
+      }
+      return;
+    }
+    
+    transitionLock.current = true;
+    setIsScannerReady(false);
+
+    if (!scannerRef.current) {
+      scannerRef.current = new Html5Qrcode('reader');
+    }
+
+    try {
+      if (scannerRef.current.isScanning) {
+        await scannerRef.current.stop();
+      }
+
+      const config = {
+        fps: 20,
+        qrbox: { width: 280, height: 180 },
+        aspectRatio: 1.0,
+        formatsToSupport: [
+          Html5QrcodeSupportedFormats.EAN_13,
+          Html5QrcodeSupportedFormats.EAN_8,
+          Html5QrcodeSupportedFormats.CODE_128,
+          Html5QrcodeSupportedFormats.UPC_A,
+          Html5QrcodeSupportedFormats.UPC_E
+        ]
+      };
+
+      await scannerRef.current.start(
+        { facingMode: mode },
+        config,
+        async (decodedText) => {
+          playBeep();
+          onScan(decodedText);
+          
+          const product = products.find(p => p.barcode === decodedText);
+          if (product) {
+            setLastScanned(product);
+            setError(null);
+            
+            if (onQuickSale) {
+              setIsProcessing(true);
+              try {
+                await onQuickSale(product);
+              } catch (err) {
+                setError('Failed to record sale');
+              } finally {
+                setIsProcessing(false);
+              }
+            }
+          } else {
+            setError(`Product with barcode ${decodedText} not found`);
+            setLastScanned(null);
+          }
+        },
+        () => {} // Ignore errors
+      );
+      setIsScannerReady(true);
+      setError(null);
+    } catch (err) {
+      console.error('Failed to start scanner:', err);
+      if (err instanceof Error && err.message.includes('transition')) {
+        // If still transitioning, try one more time after a delay
+        if (retryCount < 5) {
+          setTimeout(() => {
+            transitionLock.current = false;
+            startScanner(mode, retryCount + 1);
+          }, 300);
+          return;
+        }
+      }
+      setError('Could not access camera. Please check permissions.');
+    } finally {
+      transitionLock.current = false;
+    }
+  }, [onScan, products, onQuickSale, playBeep]);
 
   React.useEffect(() => {
-    const scanner = new Html5QrcodeScanner(
-      'reader',
-      { 
-        fps: 20, 
-        qrbox: { width: 280, height: 180 }, // Rectangular for barcodes
-        aspectRatio: 1.0,
-        formatsToSupport: [ 
-          Html5QrcodeSupportedFormats.EAN_13, 
-          Html5QrcodeSupportedFormats.EAN_8, 
-          Html5QrcodeSupportedFormats.CODE_128, 
-          Html5QrcodeSupportedFormats.UPC_A, 
-          Html5QrcodeSupportedFormats.UPC_E 
-        ]
-      },
-      /* verbose= */ false
-    );
-
-    const handleScanSuccess = async (decodedText: string) => {
-      onScan(decodedText);
-      
-      const product = products.find(p => p.barcode === decodedText);
-      if (product) {
-        setLastScanned(product);
-        setError(null);
-        
-        if (onQuickSale) {
-          setIsProcessing(true);
-          try {
-            await onQuickSale(product);
-            // Success feedback
-          } catch (err) {
-            setError('Failed to record sale');
-          } finally {
-            setIsProcessing(false);
-          }
-        }
-      } else {
-        setError(`Product with barcode ${decodedText} not found`);
-        setLastScanned(null);
+    let isMounted = true;
+    
+    const init = async () => {
+      // Small delay to ensure previous instance is fully cleaned up
+      await new Promise(resolve => setTimeout(resolve, 300));
+      if (isMounted) {
+        await startScanner(facingMode);
       }
     };
 
-    scanner.render(handleScanSuccess, () => {});
+    init();
 
     return () => {
-      scanner.clear().catch(console.error);
+      isMounted = false;
+      const cleanup = async () => {
+        if (scannerRef.current?.isScanning) {
+          try {
+            await scannerRef.current.stop();
+          } catch (e) {
+            console.error('Cleanup stop failed:', e);
+          }
+        }
+      };
+      cleanup();
     };
-  }, [onScan, products, onQuickSale]);
+  }, [startScanner, facingMode]);
+
+  const toggleCamera = () => {
+    setFacingMode(prev => prev === 'environment' ? 'user' : 'environment');
+  };
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
@@ -78,15 +178,26 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, onClose,
             </div>
             <div>
               <h3 className="text-2xl font-black text-slate-900 leading-none">Smart Scanner</h3>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1.5">Barcode Only Mode</p>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1.5">
+                {facingMode === 'environment' ? 'Back Camera' : 'Front Camera'}
+              </p>
             </div>
           </div>
-          <button 
-            onClick={onClose}
-            className="p-4 hover:bg-white rounded-2xl transition-all text-slate-400 hover:text-rose-600 shadow-sm hover:shadow-md"
-          >
-            <X className="h-7 w-7" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={toggleCamera}
+              className="p-4 hover:bg-white rounded-2xl transition-all text-slate-400 hover:text-brand-600 shadow-sm hover:shadow-md"
+              title="Switch Camera"
+            >
+              <RefreshCw className="h-6 w-6" />
+            </button>
+            <button 
+              onClick={onClose}
+              className="p-4 hover:bg-white rounded-2xl transition-all text-slate-400 hover:text-rose-600 shadow-sm hover:shadow-md"
+            >
+              <X className="h-7 w-7" />
+            </button>
+          </div>
         </div>
 
         <div className="p-8 space-y-8">
@@ -94,6 +205,25 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, onClose,
           <div className="relative group">
             <div id="reader" className="overflow-hidden rounded-[2.5rem] border-8 border-slate-100 shadow-inner bg-black aspect-square md:aspect-video"></div>
             
+            {/* Flash Overlay */}
+            <AnimatePresence>
+              {isFlashing && (
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="absolute inset-0 bg-white z-10 pointer-events-none rounded-[2.5rem]"
+                />
+              )}
+            </AnimatePresence>
+
+            {!isScannerReady && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/50 rounded-[2.5rem] backdrop-blur-sm">
+                <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin mb-4" />
+                <p className="text-white font-bold uppercase tracking-widest text-xs">Initializing Camera...</p>
+              </div>
+            )}
+
             {/* Laser Animation Overlay */}
             <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
               <div className="w-[80%] h-1 bg-brand-500/50 shadow-[0_0_15px_rgba(51,84,255,0.8)] animate-scan-line rounded-full" />
@@ -148,19 +278,59 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, onClose,
                 <div className="bg-rose-500 p-4 rounded-2xl shadow-lg shadow-rose-200">
                   <AlertCircle className="h-8 w-8 text-white" />
                 </div>
-                <div>
-                  <h4 className="text-lg font-black text-rose-900 leading-tight">Not Found</h4>
+                <div className="flex-1">
+                  <h4 className="text-lg font-black text-rose-900 leading-tight">Scanner Alert</h4>
                   <p className="text-sm font-medium text-rose-600 mt-1">{error}</p>
                 </div>
+                <button 
+                  onClick={() => setError(null)}
+                  className="p-2 hover:bg-rose-100 rounded-lg text-rose-400 transition-colors"
+                >
+                  <X className="h-5 w-5" />
+                </button>
               </motion.div>
             ) : (
               <motion.div
                 key="idle"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="p-10 text-center border-2 border-dashed border-slate-200 rounded-[2rem]"
+                className="space-y-4"
               >
-                <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Waiting for scan...</p>
+                <div className="p-10 text-center border-2 border-dashed border-slate-200 rounded-[2rem]">
+                  <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Waiting for barcode...</p>
+                </div>
+                
+                <div className="flex items-center gap-4">
+                  <div className="flex-1 h-px bg-slate-100" />
+                  <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">or</span>
+                  <div className="flex-1 h-px bg-slate-100" />
+                </div>
+
+                <div className="relative">
+                  <input 
+                    type="text"
+                    placeholder="Enter barcode manually..."
+                    className="w-full h-14 pl-12 pr-4 bg-slate-50 border-2 border-transparent focus:border-brand-500 focus:bg-white rounded-2xl outline-none transition-all font-bold text-slate-900"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        const val = (e.target as HTMLInputElement).value;
+                        if (val) {
+                          const product = products.find(p => p.barcode === val);
+                          if (product) {
+                            playBeep();
+                            setLastScanned(product);
+                            setError(null);
+                            onScan(val);
+                          } else {
+                            setError(`Product with barcode ${val} not found`);
+                          }
+                          (e.target as HTMLInputElement).value = '';
+                        }
+                      }
+                    }}
+                  />
+                  <Zap className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-300" />
+                </div>
               </motion.div>
             )}
           </AnimatePresence>

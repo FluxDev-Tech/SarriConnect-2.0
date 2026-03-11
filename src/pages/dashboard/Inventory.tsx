@@ -7,21 +7,40 @@ import {
   Package,
   ShoppingCart,
   Plus,
-  Minus
+  Minus,
+  Trash2,
+  Edit2
 } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import { Button } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
 import { Input } from '../../components/ui/Input';
 import { formatCurrency, cn } from '../../utils/helpers';
+import { useNavigate } from 'react-router-dom';
 
 export const Inventory = () => {
-  const { products, fetchProducts } = useStore();
+  const navigate = useNavigate();
+  const { products, fetchProducts, deleteProduct, isLoading } = useStore();
   const [searchQuery, setSearchQuery] = React.useState('');
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
+  const [productToDelete, setProductToDelete] = React.useState<any>(null);
 
   React.useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
+
+  const handleDeleteClick = (product: any) => {
+    setProductToDelete(product);
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (productToDelete) {
+      await deleteProduct(productToDelete.id);
+      setIsDeleteModalOpen(false);
+      setProductToDelete(null);
+    }
+  };
 
   const filteredProducts = products.filter(p => 
     p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -73,6 +92,7 @@ export const Inventory = () => {
                 <th className="px-6 py-4 text-sm font-bold text-gray-600 uppercase tracking-wider">Category</th>
                 <th className="px-6 py-4 text-sm font-bold text-gray-600 uppercase tracking-wider text-center">Stock Level</th>
                 <th className="px-6 py-4 text-sm font-bold text-gray-600 uppercase tracking-wider text-right">Status</th>
+                <th className="px-6 py-4 text-sm font-bold text-gray-600 uppercase tracking-wider text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -121,6 +141,24 @@ export const Inventory = () => {
                       </span>
                     )}
                   </td>
+                  <td className="px-6 py-4 text-right">
+                    <div className="flex items-center justify-end gap-2">
+                      <button 
+                        onClick={() => navigate('/products')} 
+                        className="p-2 hover:bg-brand-50 hover:text-brand-600 rounded-lg transition-colors"
+                        title="Edit in Products"
+                      >
+                        <Edit2 className="h-4 w-4" />
+                      </button>
+                      <button 
+                        onClick={() => handleDeleteClick(product)} 
+                        className="p-2 hover:bg-rose-50 hover:text-rose-600 rounded-lg transition-colors"
+                        title="Delete Product"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -128,6 +166,37 @@ export const Inventory = () => {
         </div>
       </div>
 
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => { setIsDeleteModalOpen(false); setProductToDelete(null); }}
+        title="Confirm Deletion"
+      >
+        <div className="space-y-8">
+          <div className="flex items-center gap-6 p-6 bg-rose-50 rounded-[2rem] text-rose-700 border border-rose-100">
+            <div className="bg-rose-100 p-3 rounded-2xl">
+              <AlertTriangle className="h-8 w-8" />
+            </div>
+            <div>
+              <p className="text-xl font-black leading-none">Are you sure?</p>
+              <p className="text-sm font-medium mt-1 opacity-80 uppercase tracking-wider">This action cannot be undone.</p>
+            </div>
+          </div>
+          
+          <p className="text-slate-600 font-medium px-2">
+            You are about to delete <span className="font-black text-slate-900 underline decoration-rose-500 decoration-2 underline-offset-4">{productToDelete?.name}</span>. 
+            This will permanently remove the product from your inventory.
+          </p>
+
+          <div className="flex gap-4 pt-2">
+            <Button variant="secondary" className="flex-1 h-14 rounded-2xl font-bold" onClick={() => setIsDeleteModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="secondary" className="flex-1 h-14 rounded-2xl font-bold bg-rose-600 text-white hover:bg-rose-700 border-none shadow-xl shadow-rose-200/50" onClick={confirmDelete} isLoading={isLoading}>
+              Delete Product
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

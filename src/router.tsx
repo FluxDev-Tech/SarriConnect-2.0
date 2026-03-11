@@ -10,7 +10,6 @@ import { Inventory } from './pages/dashboard/Inventory';
 import { POS } from './pages/dashboard/POS';
 import { SalesHistory } from './pages/dashboard/Sales';
 import { Debts } from './pages/dashboard/Debts';
-import { Settings } from './pages/dashboard/Settings';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const token = useStore((state) => state.token);
@@ -35,7 +34,6 @@ export const AppRouter = () => {
       <Route path="/products" element={<ProtectedRoute><Products /></ProtectedRoute>} />
       <Route path="/inventory" element={<ProtectedRoute><Inventory /></ProtectedRoute>} />
       <Route path="/debts" element={<ProtectedRoute><Debts /></ProtectedRoute>} />
-      <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
       
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

@@ -10,9 +10,7 @@ import {
   Store,
   Menu,
   X,
-  CreditCard,
-  Users,
-  Settings as SettingsIcon
+  CreditCard
 } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import { cn } from '../../utils/helpers';
@@ -60,8 +58,7 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
     { to: '/sales', icon: CreditCard, label: 'Sales History' },
     { to: '/products', icon: Package, label: 'Products' },
     { to: '/inventory', icon: BarChart3, label: 'Inventory' },
-    { to: '/debts', icon: Users, label: 'Utang (Debts)' },
-    { to: '/settings', icon: SettingsIcon, label: 'Settings' },
+    { to: '/debts', icon: CreditCard, label: 'Utang (Debts)' },
   ];
 
   return (
@@ -126,17 +123,17 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed inset-y-0 left-0 w-72 bg-white z-50 p-6 shadow-2xl md:hidden flex flex-col"
+              className="fixed inset-y-0 left-0 w-72 bg-white z-50 p-6 shadow-2xl lg:hidden flex flex-col"
             >
               <div className="flex items-center justify-between mb-10 px-2">
                 <div className="flex items-center gap-3">
-                  <div className="bg-indigo-600 p-2 rounded-lg">
+                  <div className="bg-brand-600 p-2 rounded-lg">
                     <Store className="h-6 w-6 text-white" />
                   </div>
-                  <h1 className="text-xl font-bold text-gray-900 tracking-tight">SariConnect</h1>
+                  <h1 className="text-xl font-bold text-slate-900 tracking-tight">SariConnect</h1>
                 </div>
-                <button onClick={closeMobileMenu} className="p-2 hover:bg-gray-100 rounded-lg transition-colors">
-                  <X className="h-6 w-6 text-gray-500" />
+                <button onClick={closeMobileMenu} className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
+                  <X className="h-6 w-6 text-slate-500" />
                 </button>
               </div>
 
@@ -153,14 +150,14 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
                 ))}
               </nav>
 
-              <div className="mt-auto pt-6 border-t border-gray-100">
+              <div className="mt-auto pt-6 border-t border-slate-100">
                 <div className="flex items-center gap-3 px-2 mb-6">
-                  <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold">
+                  <div className="h-10 w-10 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 font-bold">
                     {user?.name.charAt(0)}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 truncate">{user?.name}</p>
-                    <p className="text-xs text-gray-500 truncate capitalize">{user?.role}</p>
+                    <p className="text-sm font-semibold text-slate-900 truncate">{user?.name}</p>
+                    <p className="text-xs text-slate-500 truncate capitalize">{user?.role}</p>
                   </div>
                 </div>
                 <button
@@ -168,7 +165,7 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
                     handleLogout();
                     closeMobileMenu();
                   }}
-                  className="flex items-center gap-3 w-full px-4 py-3 text-gray-500 hover:bg-red-50 hover:text-red-600 rounded-xl transition-all"
+                  className="flex items-center gap-3 w-full px-4 py-3 text-slate-500 hover:bg-rose-50 hover:text-rose-600 rounded-xl transition-all"
                 >
                   <LogOut className="h-5 w-5" />
                   <span className="font-medium">Logout</span>
@@ -181,14 +178,14 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
 
       {/* Main Content */}
       <main className="flex-1 overflow-y-auto">
-        <header className="h-16 bg-white/80 backdrop-blur-md border-b border-gray-100 flex items-center justify-between px-6 sticky top-0 z-30 md:hidden">
+        <header className="h-16 bg-white/80 backdrop-blur-md border-b border-slate-100 flex items-center justify-between px-6 sticky top-0 z-30 lg:hidden">
            <div className="flex items-center gap-2">
-            <Store className="h-6 w-6 text-indigo-600" />
-            <span className="font-bold text-gray-900">SariConnect</span>
+            <Store className="h-6 w-6 text-brand-600" />
+            <span className="font-bold text-slate-900">SariConnect</span>
           </div>
           <button 
             onClick={toggleMobileMenu}
-            className="p-2 hover:bg-indigo-50 rounded-xl transition-all text-indigo-600"
+            className="p-2 hover:bg-brand-50 rounded-xl transition-all text-brand-600"
           >
             <Menu className="h-6 w-6" />
           </button>

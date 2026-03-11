@@ -43,7 +43,12 @@ export const Scanner = () => {
   const handleQuickSale = async () => {
     if (!scannedProduct) return;
     try {
-      await recordSale([{ id: scannedProduct.id, quantity: 1, price: scannedProduct.price }], scannedProduct.price);
+      await recordSale(
+        [{ id: scannedProduct.id, quantity: 1, price: scannedProduct.price }], 
+        scannedProduct.price,
+        scannedProduct.price,
+        0
+      );
       alert('Quick sale recorded!');
       setScannedProduct(null);
       setIsScanning(true);

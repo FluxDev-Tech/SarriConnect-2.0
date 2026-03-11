@@ -45,6 +45,8 @@ db.exec(`
 
   CREATE TABLE IF NOT EXISTS sales (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    subtotal REAL NOT NULL DEFAULT 0,
+    discount REAL NOT NULL DEFAULT 0,
     totalPrice REAL NOT NULL,
     paymentType TEXT DEFAULT 'cash', -- 'cash' or 'debt'
     customerName TEXT, -- for debt tracking
@@ -66,6 +68,15 @@ db.exec(`
     value TEXT
   );
 `);
+
+// Migration: Add subtotal and discount to sales if they don't exist
+try {
+  db.prepare("ALTER TABLE sales ADD COLUMN subtotal REAL NOT NULL DEFAULT 0").run();
+  db.prepare("ALTER TABLE sales ADD COLUMN discount REAL NOT NULL DEFAULT 0").run();
+  console.log("Migration: Added subtotal and discount columns to sales table.");
+} catch (e) {
+  // Columns probably already exist
+}
 
 // Migration: Add isDeleted to products if it doesn't exist
 try {
@@ -226,11 +237,11 @@ app.delete("/api/products/:id", authenticateToken, (req, res) => {
 
 // Sales
 app.post("/api/sales", authenticateToken, (req, res) => {
-  const { items, totalPrice, paymentType, customerName } = req.body; // items: [{ id, quantity, price }]
+  const { items, totalPrice, subtotal, discount, paymentType, customerName } = req.body; // items: [{ id, quantity, price }]
   
   const transaction = db.transaction(() => {
-    const saleStmt = db.prepare("INSERT INTO sales (totalPrice, paymentType, customerName) VALUES (?, ?, ?)");
-    const saleInfo = saleStmt.run(totalPrice, paymentType || 'cash', customerName || null);
+    const saleStmt = db.prepare("INSERT INTO sales (totalPrice, subtotal, discount, paymentType, customerName) VALUES (?, ?, ?, ?, ?)");
+    const saleInfo = saleStmt.run(totalPrice, subtotal || totalPrice, discount || 0, paymentType || 'cash', customerName || null);
     const saleId = saleInfo.lastInsertRowid;
 
     const itemStmt = db.prepare("INSERT INTO sale_items (saleId, productId, quantity, priceAtSale) VALUES (?, ?, ?, ?)");

@@ -20,7 +20,8 @@ interface AppState {
   addProduct: (product: Omit<Product, 'id' | 'createdAt'>) => Promise<void>;
   updateProduct: (id: number, product: Partial<Product>) => Promise<void>;
   deleteProduct: (id: number) => Promise<void>;
-  recordSale: (items: { id: number; quantity: number; price: number }[], totalPrice: number, paymentType?: 'cash' | 'debt', customerName?: string) => Promise<void>;
+  recordSale: (items: { id: number; quantity: number; price: number }[], totalPrice: number, subtotal: number, discount: number, paymentType?: 'cash' | 'debt', customerName?: string) => Promise<void>;
+  markAsPaid: (saleId: number) => Promise<void>;
 }
 
 export const useStore = create<AppState>((set, get) => ({
@@ -97,9 +98,14 @@ export const useStore = create<AppState>((set, get) => ({
     get().fetchProducts();
   },
 
-  recordSale: async (items, totalPrice, paymentType = 'cash', customerName) => {
-    await api.post('/sales', { items, totalPrice, paymentType, customerName });
+  recordSale: async (items, totalPrice, subtotal, discount, paymentType = 'cash', customerName) => {
+    await api.post('/sales', { items, totalPrice, subtotal, discount, paymentType, customerName });
     get().fetchProducts();
+    get().fetchStats();
+  },
+
+  markAsPaid: async (saleId) => {
+    await api.put(`/sales/${saleId}/pay`);
     get().fetchStats();
   },
 }));

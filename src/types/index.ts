@@ -19,6 +19,8 @@ export interface Product {
 export interface Sale {
   id: number;
   totalPrice: number;
+  subtotal: number;
+  discount: number;
   paymentType: 'cash' | 'debt';
   customerName?: string;
   createdAt: string;

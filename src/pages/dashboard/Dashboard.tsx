@@ -60,11 +60,8 @@ const RecentSalesList = () => {
       {sales.map((sale) => (
         <div key={sale.id} className="flex items-center justify-between p-4 rounded-2xl bg-gray-50/50 border border-gray-100 hover:bg-gray-50 transition-all group">
           <div className="flex items-center gap-4">
-            <div className={cn(
-              "p-3 rounded-xl transition-transform group-hover:scale-110",
-              sale.paymentType === 'cash' ? "bg-emerald-100 text-emerald-600" : "bg-rose-100 text-rose-600"
-            )}>
-              {sale.paymentType === 'cash' ? <Banknote className="h-5 w-5" /> : <Clock className="h-5 w-5" />}
+            <div className="p-3 rounded-xl transition-transform group-hover:scale-110 bg-brand-100 text-brand-600">
+              <ShoppingCart className="h-5 w-5" />
             </div>
             <div>
               <p className="font-bold text-gray-900 truncate max-w-[150px]">{sale.customerName || 'Walk-in'}</p>
@@ -77,12 +74,6 @@ const RecentSalesList = () => {
           </div>
           <div className="text-right">
             <p className="font-black text-gray-900">{formatCurrency(sale.totalPrice)}</p>
-            <div className={cn(
-              "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider",
-              sale.paymentType === 'cash' ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
-            )}>
-              {sale.paymentType}
-            </div>
           </div>
         </div>
       ))}
@@ -144,13 +135,6 @@ export const Dashboard = () => {
           <h2 className="text-4xl font-black text-slate-900">Store Overview</h2>
           <p className="text-slate-500 font-medium mt-1">Real-time performance analytics for your store</p>
         </div>
-        <Button 
-          onClick={() => navigate('/pos')} 
-          className="h-14 px-8 rounded-2xl bg-brand-600 hover:bg-brand-700 shadow-xl shadow-brand-200/50 text-base font-bold"
-        >
-          <ShoppingCart className="mr-3 h-5 w-5" />
-          Open POS Terminal
-        </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -199,30 +183,16 @@ export const Dashboard = () => {
           <div className="flex items-center justify-between mb-8">
             <div>
               <h3 className="text-xl font-bold text-slate-900">Revenue Analytics</h3>
-              <p className="text-sm text-slate-400 font-medium">Cash vs Utang comparison</p>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <div className="h-3 w-3 rounded-full bg-emerald-500" />
-                <span className="text-xs font-bold text-slate-500">Cash</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="h-3 w-3 rounded-full bg-rose-500" />
-                <span className="text-xs font-bold text-slate-500">Utang</span>
-              </div>
+              <p className="text-sm text-slate-400 font-medium">Daily revenue performance</p>
             </div>
           </div>
           <div className="h-[350px]">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={stats.dailySales}>
+              <AreaChart data={stats.dailySales.map(d => ({ ...d, total: d.cash + d.debt }))}>
                 <defs>
-                  <linearGradient id="colorCash" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.15}/>
-                    <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                  </linearGradient>
-                  <linearGradient id="colorDebt" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.15}/>
-                    <stop offset="95%" stopColor="#f43f5e" stopOpacity={0}/>
+                  <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3354ff" stopOpacity={0.15}/>
+                    <stop offset="95%" stopColor="#3354ff" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -247,10 +217,9 @@ export const Dashboard = () => {
                     boxShadow: '0 20px 25px -5px rgb(0 0 0 / 0.1)',
                     padding: '16px'
                   }}
-                  formatter={(value: number) => [formatCurrency(value), '']}
+                  formatter={(value: number) => [formatCurrency(value), 'Revenue']}
                 />
-                <Area type="monotone" dataKey="cash" name="Cash" stroke="#10b981" strokeWidth={4} fillOpacity={1} fill="url(#colorCash)" />
-                <Area type="monotone" dataKey="debt" name="Utang" stroke="#f43f5e" strokeWidth={4} fillOpacity={1} fill="url(#colorDebt)" />
+                <Area type="monotone" dataKey="total" name="Revenue" stroke="#3354ff" strokeWidth={4} fillOpacity={1} fill="url(#colorTotal)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>

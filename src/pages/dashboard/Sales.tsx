@@ -14,15 +14,21 @@ import {
   ArrowUpDown,
   Download,
   ChevronDown,
-  CalendarDays
+  CalendarDays,
+  Eye,
+  Printer,
+  X
 } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import { formatCurrency, cn } from '../../utils/helpers';
 import { Button } from '../../components/ui/Button';
+import { Modal } from '../../components/ui/Modal';
+import { Receipt } from '../../components/dashboard/Receipt';
 import api from '../../services/api';
 import { Sale } from '../../types';
 
 export const SalesHistory = () => {
+  const { receiptSettings, fetchReceiptSettings } = useStore();
   const [sales, setSales] = React.useState<Sale[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [searchQuery, setSearchQuery] = React.useState('');
@@ -31,6 +37,9 @@ export const SalesHistory = () => {
   const [startDate, setStartDate] = React.useState('');
   const [endDate, setEndDate] = React.useState('');
   const [sortBy, setSortBy] = React.useState<'date-desc' | 'date-asc' | 'price-desc' | 'price-asc'>('date-desc');
+  const [selectedSale, setSelectedSale] = React.useState<any>(null);
+  const [isModalOpen, setIsModalOpen] = React.useState(false);
+  const [isDetailsLoading, setIsDetailsLoading] = React.useState(false);
 
   const fetchSales = React.useCallback(async () => {
     setIsLoading(true);
@@ -46,7 +55,30 @@ export const SalesHistory = () => {
 
   React.useEffect(() => {
     fetchSales();
-  }, [fetchSales]);
+    fetchReceiptSettings();
+  }, [fetchSales, fetchReceiptSettings]);
+
+  const handleViewDetails = async (saleId: number) => {
+    setIsDetailsLoading(true);
+    try {
+      const res = await api.get(`/sales/${saleId}`);
+      setSelectedSale(res.data);
+      setIsModalOpen(true);
+    } catch (err) {
+      console.error(err);
+      // Fallback: use data from list if detail fetch fails
+      const sale = sales.find(s => s.id === saleId);
+      if (sale) {
+        setSelectedSale({
+          ...sale,
+          items: [] // We don't have structured items here
+        });
+        setIsModalOpen(true);
+      }
+    } finally {
+      setIsDetailsLoading(false);
+    }
+  };
 
   const filteredSales = React.useMemo(() => {
     let result = sales.filter(s => {
@@ -285,18 +317,19 @@ export const SalesHistory = () => {
                 <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Customer</th>
                 <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Type</th>
                 <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-right">Total</th>
+                <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {isLoading ? (
                 [1,2,3,4,5].map(i => (
                   <tr key={i} className="animate-pulse">
-                    <td colSpan={5} className="px-6 py-4"><div className="h-8 bg-gray-100 rounded-xl w-full" /></td>
+                    <td colSpan={6} className="px-6 py-4"><div className="h-8 bg-gray-100 rounded-xl w-full" /></td>
                   </tr>
                 ))
               ) : filteredSales.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-20 text-center">
+                  <td colSpan={6} className="px-6 py-20 text-center">
                     <div className="bg-gray-50 h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-4">
                       <Clock className="h-8 w-8 text-gray-300" />
                     </div>
@@ -331,6 +364,18 @@ export const SalesHistory = () => {
                     <td className="px-6 py-4 text-right">
                       <span className="font-black text-gray-900">{formatCurrency(sale.totalPrice)}</span>
                     </td>
+                    <td className="px-6 py-4 text-right">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="rounded-xl h-9 px-4 font-bold text-xs"
+                        onClick={() => handleViewDetails(sale.id)}
+                        isLoading={isDetailsLoading && selectedSale?.id === sale.id}
+                      >
+                        <Eye className="h-3.5 w-3.5 mr-1.5" />
+                        Details
+                      </Button>
+                    </td>
                   </tr>
                 ))
               )}
@@ -338,6 +383,63 @@ export const SalesHistory = () => {
           </table>
         </div>
       </div>
+
+      {/* Sale Details Modal */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title={
+          <div className="flex items-center gap-2">
+            <span className="text-lg">📄</span>
+            <span>Sale Details</span>
+          </div>
+        }
+      >
+        <div className="space-y-6">
+          <div className="bg-slate-50 p-6 rounded-[2rem] overflow-hidden border border-slate-100">
+            {selectedSale && receiptSettings && (
+              <Receipt 
+                settings={receiptSettings}
+                items={selectedSale.itemsList || []}
+                subtotal={selectedSale.subtotal}
+                discount={selectedSale.discount}
+                total={selectedSale.totalPrice}
+                receivedAmount={selectedSale.receivedAmount || selectedSale.totalPrice}
+                change={selectedSale.change || 0}
+                paymentType={selectedSale.paymentType}
+                customerName={selectedSale.customerName}
+                customerPhone={selectedSale.customerPhone}
+                customerAddress={selectedSale.customerAddress}
+                date={selectedSale.createdAt}
+                receiptNumber={`SALE_${selectedSale.id}`}
+              />
+            )}
+            {!selectedSale?.itemsList && selectedSale && (
+              <div className="text-center py-8 space-y-2">
+                <p className="text-slate-400 text-sm font-medium">Detailed item list not available for this legacy record.</p>
+                <p className="text-slate-900 font-bold">Total: {formatCurrency(selectedSale.totalPrice)}</p>
+              </div>
+            )}
+          </div>
+
+          <div className="flex gap-3 no-print">
+            <Button 
+              className="flex-[2] h-14 rounded-2xl font-black text-sm uppercase tracking-widest bg-brand-600 hover:bg-brand-700 shadow-lg shadow-brand-200" 
+              onClick={() => window.print()}
+            >
+              <Printer className="mr-2 h-5 w-5" />
+              Print Receipt
+            </Button>
+            <Button 
+              variant="secondary" 
+              className="flex-1 h-14 rounded-2xl font-black text-sm uppercase tracking-widest bg-slate-100 border-none text-slate-600 hover:bg-slate-200" 
+              onClick={() => setIsModalOpen(false)}
+            >
+              Close
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

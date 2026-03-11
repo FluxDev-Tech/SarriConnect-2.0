@@ -3,14 +3,15 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   Package, 
-  ShoppingCart, 
   BarChart3, 
   Scan, 
   LogOut,
   Store,
   Menu,
   X,
-  CreditCard
+  CreditCard,
+  History,
+  ShoppingCart
 } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import { cn } from '../../utils/helpers';
@@ -54,11 +55,12 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
 
   const menuItems = [
     { to: '/', icon: LayoutDashboard, label: 'Dashboard' },
-    { to: '/pos', icon: ShoppingCart, label: 'Point of Sale' },
-    { to: '/sales', icon: CreditCard, label: 'Sales History' },
-    { to: '/products', icon: Package, label: 'Products' },
+    { to: '/pos', icon: ShoppingCart, label: 'Pos' },
+    { to: '/products', icon: Package, label: 'Product' },
     { to: '/inventory', icon: BarChart3, label: 'Inventory' },
-    { to: '/debts', icon: CreditCard, label: 'Utang (Debts)' },
+    { to: '/sales', icon: History, label: 'Sale History' },
+    { to: '/debts', icon: CreditCard, label: 'Utang/Debts' },
+    { to: '/scanner', icon: Scan, label: 'Scanner' },
   ];
 
   return (

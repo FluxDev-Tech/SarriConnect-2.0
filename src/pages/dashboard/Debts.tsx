@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   User as UserIcon, 
   Search, 
@@ -9,7 +10,8 @@ import {
   ArrowRight,
   Printer,
   Clock,
-  Banknote
+  Banknote,
+  Plus
 } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import { formatCurrency, cn } from '../../utils/helpers';
@@ -20,6 +22,7 @@ import { Sale } from '../../types';
 import api from '../../services/api';
 
 export const Debts = () => {
+  const navigate = useNavigate();
   const { fetchStats, receiptSettings, fetchReceiptSettings, markAsPaid } = useStore();
   const [debts, setDebts] = React.useState<Sale[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -71,14 +74,23 @@ export const Debts = () => {
           <h2 className="text-4xl font-black text-slate-900">Utang Management</h2>
           <p className="text-slate-500 font-medium mt-1">Track and manage customer credit balances</p>
         </div>
-        <div className="bg-rose-50 px-8 py-4 rounded-[2rem] border border-rose-100 flex items-center gap-6 shadow-sm">
-          <div className="bg-rose-600 p-3 rounded-2xl shadow-lg shadow-rose-200">
-            <DollarSign className="h-6 w-6 text-white" />
+        <div className="flex items-center gap-4">
+          <div className="bg-rose-50 px-8 py-4 rounded-[2rem] border border-rose-100 flex items-center gap-6 shadow-sm">
+            <div className="bg-rose-600 p-3 rounded-2xl shadow-lg shadow-rose-200">
+              <DollarSign className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <p className="text-[10px] font-black text-rose-600 uppercase tracking-widest mb-1">Total Receivables</p>
+              <p className="text-3xl font-black text-rose-700 tracking-tighter">{formatCurrency(totalDebt)}</p>
+            </div>
           </div>
-          <div>
-            <p className="text-[10px] font-black text-rose-600 uppercase tracking-widest mb-1">Total Receivables</p>
-            <p className="text-3xl font-black text-rose-700 tracking-tighter">{formatCurrency(totalDebt)}</p>
-          </div>
+          <Button 
+            onClick={() => navigate('/pos?type=debt')}
+            className="h-14 px-8 rounded-2xl bg-rose-600 hover:bg-rose-700 shadow-xl shadow-rose-200/50 font-bold"
+          >
+            <Plus className="mr-2 h-5 w-5" />
+            New Utang
+          </Button>
         </div>
       </div>
 

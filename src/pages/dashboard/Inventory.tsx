@@ -71,7 +71,7 @@ export const Inventory = () => {
               <tr className="bg-gray-50/50 border-b border-gray-100">
                 <th className="px-6 py-4 text-sm font-bold text-gray-600 uppercase tracking-wider">Product</th>
                 <th className="px-6 py-4 text-sm font-bold text-gray-600 uppercase tracking-wider">Category</th>
-                <th className="px-6 py-4 text-sm font-bold text-gray-600 uppercase tracking-wider text-center">Current Stock</th>
+                <th className="px-6 py-4 text-sm font-bold text-gray-600 uppercase tracking-wider text-center">Stock Level</th>
                 <th className="px-6 py-4 text-sm font-bold text-gray-600 uppercase tracking-wider text-right">Status</th>
               </tr>
             </thead>
@@ -96,6 +96,14 @@ export const Inventory = () => {
                   <td className="px-6 py-4">
                     <span className="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-xs font-bold uppercase tracking-wide">
                       {product.category}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <span className={cn(
+                      "text-lg font-black",
+                      product.stock <= 0 ? "text-rose-600" : product.stock <= 5 ? "text-amber-600" : "text-slate-900"
+                    )}>
+                      {product.stock}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right">

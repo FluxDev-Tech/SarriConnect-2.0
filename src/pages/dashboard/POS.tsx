@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { 
   Search, 
   ShoppingCart, 
@@ -16,8 +17,7 @@ import {
   Clock,
   ArrowRight,
   LayoutDashboard,
-  Menu,
-  Scan
+  Menu
 } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import { formatCurrency, cn } from '../../utils/helpers';
@@ -25,9 +25,9 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Modal } from '../../components/ui/Modal';
 import { Receipt } from '../../components/dashboard/Receipt';
-import { BarcodeScanner } from '../../components/dashboard/BarcodeScanner';
 import { Product } from '../../types';
 import { motion, AnimatePresence } from 'motion/react';
+import confetti from 'canvas-confetti';
 
 interface CartItem extends Product {
   quantity: number;
@@ -35,10 +35,13 @@ interface CartItem extends Product {
 
 export const POS = () => {
   const { products, fetchProducts, recordSale, receiptSettings, fetchReceiptSettings, isLoading } = useStore();
+  const [searchParams] = useSearchParams();
+  const initialType = searchParams.get('type') === 'debt' ? 'debt' : 'cash';
+  
   const [searchQuery, setSearchQuery] = React.useState('');
   const [selectedCategory, setSelectedCategory] = React.useState<string>('All');
   const [cart, setCart] = React.useState<CartItem[]>([]);
-  const [paymentType, setPaymentType] = React.useState<'cash' | 'debt'>('cash');
+  const [paymentType, setPaymentType] = React.useState<'cash' | 'debt'>(initialType);
   const [customerName, setCustomerName] = React.useState('');
   const [customerPhone, setCustomerPhone] = React.useState('');
   const [customerAddress, setCustomerAddress] = React.useState('');
@@ -49,7 +52,6 @@ export const POS = () => {
   const [lastOrder, setLastOrder] = React.useState<any>(null);
   const [activeTab, setActiveTab] = React.useState<'products' | 'cart'>('products');
   const [viewMode, setViewMode] = React.useState<'grid' | 'list'>('grid');
-  const [isScanning, setIsScanning] = React.useState(false);
   const searchInputRef = React.useRef<HTMLInputElement>(null);
 
   const playSound = (type: 'add' | 'success' | 'click') => {
@@ -149,8 +151,19 @@ export const POS = () => {
     }));
 
     try {
+      // Add a small artificial delay to show loading state
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
       await recordSale(items, totalAmount, subtotal, discount, paymentType, customerName);
       playSound('success');
+      
+      // Trigger confetti
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 },
+        colors: ['#10b981', '#34d399', '#6ee7b7', '#ffffff']
+      });
       
       setLastOrder({
         items: cart.map(item => ({ name: item.name, quantity: item.quantity, price: item.price })),
@@ -174,7 +187,7 @@ export const POS = () => {
       setReceivedAmount('');
       setPaymentType('cash');
       setShowSuccess(true);
-      setShowReceipt(true);
+      setShowReceipt(false);
       setActiveTab('products');
       setTimeout(() => setShowSuccess(false), 3000);
     } catch (error) {
@@ -182,36 +195,8 @@ export const POS = () => {
     }
   };
 
-  const handleScan = (barcode: string) => {
-    setSearchQuery(barcode);
-    setIsScanning(false);
-    // The auto-add logic in useEffect will handle adding the product if it's an exact match
-  };
-
-  const handleQuickSale = async (product: Product) => {
-    if (product.stock <= 0) return;
-    const items = [{ id: product.id, quantity: 1, price: product.price }];
-    try {
-      await recordSale(items, product.price, product.price, 0, 'cash', 'Quick Scan Sale');
-      playSound('success');
-    } catch (error) {
-      console.error('Quick sale failed:', error);
-    }
-  };
-
   return (
     <div className="flex flex-col lg:grid lg:grid-cols-12 gap-8 h-[calc(100vh-100px)] lg:h-[calc(100vh-140px)] relative">
-      <AnimatePresence>
-        {isScanning && (
-          <BarcodeScanner 
-            onScan={handleScan} 
-            onClose={() => setIsScanning(false)} 
-            products={products}
-            onQuickSale={handleQuickSale}
-          />
-        )}
-      </AnimatePresence>
-
       {/* Mobile Tab Toggle */}
       <div className="lg:hidden flex bg-white p-1 rounded-2xl border border-slate-100 shadow-sm mb-2">
         <button
@@ -253,33 +238,24 @@ export const POS = () => {
               <p className="text-slate-500 font-medium text-sm">Build an order by selecting items</p>
             </div>
             <div className="flex items-center gap-3 w-full md:w-auto">
-              <div className="relative flex-1 md:w-80 flex gap-2">
-                <div className="relative flex-1">
-                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                  <input
-                    ref={searchInputRef}
-                    type="text"
-                    placeholder="Search or scan..."
-                    className="w-full pl-10 pr-10 py-3 rounded-2xl border border-slate-100 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all font-medium text-sm"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                  {searchQuery && (
-                    <button 
-                      onClick={() => setSearchQuery('')}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-100 rounded-full transition-colors"
-                    >
-                      <X className="h-3 w-3 text-slate-400" />
-                    </button>
-                  )}
-                </div>
-                <button
-                  onClick={() => setIsScanning(true)}
-                  className="p-3 bg-white border border-slate-100 rounded-2xl shadow-sm text-slate-400 hover:text-brand-600 hover:bg-brand-50 transition-all"
-                  title="Scan Barcode"
-                >
-                  <Scan className="h-5 w-5" />
-                </button>
+              <div className="relative flex-1 md:w-80">
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                <input
+                  ref={searchInputRef}
+                  type="text"
+                  placeholder="Search or scan..."
+                  className="w-full pl-10 pr-10 py-3 rounded-2xl border border-slate-100 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all font-medium text-sm"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                {searchQuery && (
+                  <button 
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 p-1 hover:bg-slate-100 rounded-full transition-colors"
+                  >
+                    <X className="h-3 w-3 text-slate-400" />
+                  </button>
+                )}
               </div>
               <div className="flex bg-white p-1 rounded-xl border border-slate-100 shadow-sm">
                 <button
@@ -688,24 +664,55 @@ export const POS = () => {
       <AnimatePresence>
         {showSuccess && (
           <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 50 }}
-            className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 bg-emerald-600 text-white px-6 py-4 rounded-[2rem] shadow-2xl flex items-center gap-6 border border-white/20 backdrop-blur-md"
+            initial={{ opacity: 0, y: 100, scale: 0.8 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 100, scale: 0.8 }}
+            className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-md"
           >
-            <div className="flex items-center gap-3">
-              <div className="bg-white/20 p-1.5 rounded-lg">
-                <CheckCircle2 className="h-5 w-5" />
+            <div className="bg-emerald-600 text-white p-1 rounded-[2.5rem] shadow-[0_20px_50px_rgba(16,185,129,0.3)] border border-white/20 backdrop-blur-xl">
+              <div className="flex items-center justify-between pl-6 pr-2 py-2">
+                <div className="flex items-center gap-4">
+                  <motion.div 
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.2, type: 'spring' }}
+                    className="bg-white/20 p-2 rounded-full"
+                  >
+                    <CheckCircle2 className="h-6 w-6 text-white" />
+                  </motion.div>
+                  <div>
+                    <p className="font-black text-lg leading-none tracking-tight">Checkout Successful!</p>
+                    <p className="text-[10px] font-bold text-emerald-100 uppercase tracking-widest mt-1">Order recorded in history</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <button 
+                    onClick={() => setShowReceipt(true)}
+                    className="bg-white text-emerald-600 hover:bg-emerald-50 h-12 px-5 rounded-2xl text-xs font-black transition-all flex items-center gap-2 shadow-lg active:scale-95"
+                  >
+                    <Printer className="h-4 w-4" />
+                    Receipt
+                  </button>
+                  <button 
+                    onClick={() => setShowSuccess(false)}
+                    className="bg-emerald-700/50 hover:bg-emerald-700 h-12 w-12 rounded-2xl flex items-center justify-center transition-all active:scale-95"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
               </div>
-              <p className="font-black text-base leading-none">Order Successful!</p>
+              
+              {/* Progress Bar */}
+              <div className="px-8 pb-1">
+                <motion.div 
+                  initial={{ width: '100%' }}
+                  animate={{ width: '0%' }}
+                  transition={{ duration: 3, ease: 'linear' }}
+                  className="h-1 bg-white/30 rounded-full"
+                />
+              </div>
             </div>
-            <button 
-              onClick={() => setShowReceipt(true)}
-              className="bg-white text-emerald-600 hover:bg-emerald-50 px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 shadow-lg"
-            >
-              <Printer className="h-3 w-3" />
-              Receipt
-            </button>
           </motion.div>
         )}
       </AnimatePresence>

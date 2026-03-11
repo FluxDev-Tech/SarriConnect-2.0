@@ -16,7 +16,6 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, onClose,
   const [lastScanned, setLastScanned] = React.useState<Product | null>(null);
   const [isProcessing, setIsProcessing] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  const [autoDeduct, setAutoDeduct] = React.useState(true);
 
   React.useEffect(() => {
     const scanner = new Html5QrcodeScanner(
@@ -44,7 +43,7 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, onClose,
         setLastScanned(product);
         setError(null);
         
-        if (autoDeduct && onQuickSale) {
+        if (onQuickSale) {
           setIsProcessing(true);
           try {
             await onQuickSale(product);
@@ -66,7 +65,7 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, onClose,
     return () => {
       scanner.clear().catch(console.error);
     };
-  }, [onScan, products, autoDeduct, onQuickSale]);
+  }, [onScan, products, onQuickSale]);
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
@@ -105,26 +104,6 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, onClose,
             <div className="absolute top-6 right-6 w-12 h-12 border-t-4 border-r-4 border-brand-500 rounded-tr-2xl opacity-50" />
             <div className="absolute bottom-6 left-6 w-12 h-12 border-b-4 border-l-4 border-brand-500 rounded-bl-2xl opacity-50" />
             <div className="absolute bottom-6 right-6 w-12 h-12 border-b-4 border-r-4 border-brand-500 rounded-br-2xl opacity-50" />
-          </div>
-
-          {/* Controls */}
-          <div className="flex items-center justify-between p-4 bg-slate-50 rounded-3xl border border-slate-100">
-            <div className="flex items-center gap-3">
-              <div className={cn(
-                "w-12 h-6 rounded-full p-1 transition-colors cursor-pointer",
-                autoDeduct ? "bg-brand-600" : "bg-slate-300"
-              )} onClick={() => setAutoDeduct(!autoDeduct)}>
-                <div className={cn(
-                  "w-4 h-4 bg-white rounded-full transition-transform shadow-sm",
-                  autoDeduct ? "translate-x-6" : "translate-x-0"
-                )} />
-              </div>
-              <span className="text-sm font-bold text-slate-700">Auto-Deduct Stock</span>
-            </div>
-            <div className="flex items-center gap-2 text-slate-400">
-              <Info className="h-4 w-4" />
-              <span className="text-[10px] font-black uppercase tracking-widest">1 Unit per scan</span>
-            </div>
           </div>
 
           {/* Feedback Area */}

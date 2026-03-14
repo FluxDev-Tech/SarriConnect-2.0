@@ -35,7 +35,7 @@ export const Debts = () => {
     try {
       const res = await api.get('/sales');
       // Filter only debts
-      const debtSales = res.data.filter((s: Sale) => s.paymentType === 'debt');
+      const debtSales = (res.data || []).filter((s: Sale) => s.paymentType === 'debt');
       setDebts(debtSales);
     } catch (err) {
       console.error(err);

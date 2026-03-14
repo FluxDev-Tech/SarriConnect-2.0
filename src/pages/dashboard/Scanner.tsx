@@ -31,7 +31,7 @@ export const Scanner = () => {
   const handleScan = (barcode: string) => {
     // If not auto-deducting, we still want to record the scan in history
     if (!autoDeduct) {
-      const product = products.find(p => p.barcode === barcode);
+      const product = (products || []).find(p => p.barcode === barcode);
       if (product) {
         setScanHistory(prev => [{ product, timestamp: new Date().toLocaleTimeString() }, ...prev].slice(0, 10));
       }
@@ -170,7 +170,7 @@ export const Scanner = () => {
             
             <div className="flex-1 space-y-4 overflow-y-auto pr-2 -mr-2">
               <AnimatePresence initial={false}>
-                {scanHistory.length === 0 ? (
+                {(scanHistory || []).length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-64 text-center space-y-4">
                     <div className="bg-slate-50 p-4 rounded-full">
                       <Scan className="h-8 w-8 text-slate-300" />
@@ -178,7 +178,7 @@ export const Scanner = () => {
                     <p className="text-slate-400 font-bold text-sm uppercase tracking-widest">No recent scans</p>
                   </div>
                 ) : (
-                  scanHistory.map((item, index) => (
+                  (scanHistory || []).map((item, index) => (
                     <motion.div
                       key={`${item.product.id}-${item.timestamp}`}
                       initial={{ opacity: 0, x: 20 }}

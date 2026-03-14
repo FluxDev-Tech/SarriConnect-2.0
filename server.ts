@@ -262,28 +262,6 @@ app.post("/api/sales", authenticateToken, (req, res) => {
   }
 });
 
-app.get("/api/sales", authenticateToken, (req, res) => {
-  const sales = db.prepare(`
-    SELECT s.*, GROUP_CONCAT(p.name || ' (x' || si.quantity || ')') as items
-    FROM sales s
-    JOIN sale_items si ON s.id = si.saleId
-    JOIN products p ON si.productId = p.id
-    GROUP BY s.id
-    ORDER BY s.createdAt DESC
-  `).all();
-  res.json(sales);
-});
-
-app.put("/api/sales/:id/pay", authenticateToken, (req, res) => {
-  const { id } = req.params;
-  try {
-    db.prepare("UPDATE sales SET paymentType = 'cash' WHERE id = ?").run(id);
-    res.json({ message: "Debt marked as paid" });
-  } catch (error: any) {
-    res.status(400).json({ message: error.message });
-  }
-});
-
 app.get("/api/sales/stats", authenticateToken, (req, res) => {
   const totalRevenue = db.prepare("SELECT SUM(totalPrice) as total FROM sales").get() as any;
   const cashRevenue = db.prepare("SELECT SUM(totalPrice) as total FROM sales WHERE paymentType = 'cash'").get() as any;
@@ -319,6 +297,50 @@ app.get("/api/sales/stats", authenticateToken, (req, res) => {
     dailySales,
     topProducts
   });
+});
+
+app.get("/api/sales", authenticateToken, (req, res) => {
+  const sales = db.prepare(`
+    SELECT s.*, GROUP_CONCAT(p.name || ' (x' || si.quantity || ')') as items
+    FROM sales s
+    JOIN sale_items si ON s.id = si.saleId
+    JOIN products p ON si.productId = p.id
+    GROUP BY s.id
+    ORDER BY s.createdAt DESC
+  `).all();
+  res.json(sales);
+});
+
+app.get("/api/sales/:id", authenticateToken, (req, res) => {
+  const { id } = req.params;
+  const sale: any = db.prepare("SELECT * FROM sales WHERE id = ?").get(id);
+  if (!sale) return res.status(404).json({ message: "Sale not found" });
+
+  const items = db.prepare(`
+    SELECT si.*, p.name
+    FROM sale_items si
+    JOIN products p ON si.productId = p.id
+    WHERE si.saleId = ?
+  `).all(id);
+
+  res.json({
+    ...sale,
+    itemsList: items.map((item: any) => ({
+      name: item.name,
+      quantity: item.quantity,
+      price: item.priceAtSale
+    }))
+  });
+});
+
+app.put("/api/sales/:id/pay", authenticateToken, (req, res) => {
+  const { id } = req.params;
+  try {
+    db.prepare("UPDATE sales SET paymentType = 'cash' WHERE id = ?").run(id);
+    res.json({ message: "Debt marked as paid" });
+  } catch (error: any) {
+    res.status(400).json({ message: error.message });
+  }
 });
 
 // Settings

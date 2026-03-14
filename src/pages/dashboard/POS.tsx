@@ -17,7 +17,11 @@ import {
   Clock,
   ArrowRight,
   LayoutDashboard,
-  Menu
+  Menu,
+  Camera,
+  Eye,
+  LayoutGrid,
+  List
 } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import { formatCurrency, cn } from '../../utils/helpers';
@@ -25,6 +29,7 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Modal } from '../../components/ui/Modal';
 import { Receipt } from '../../components/dashboard/Receipt';
+import { BarcodeScanner } from '../../components/dashboard/BarcodeScanner';
 import { Product } from '../../types';
 import { motion, AnimatePresence } from 'motion/react';
 import confetti from 'canvas-confetti';
@@ -45,13 +50,13 @@ export const POS = () => {
   const [customerName, setCustomerName] = React.useState('');
   const [customerPhone, setCustomerPhone] = React.useState('');
   const [customerAddress, setCustomerAddress] = React.useState('');
-  const [discount, setDiscount] = React.useState(0);
   const [receivedAmount, setReceivedAmount] = React.useState<string>('');
   const [showSuccess, setShowSuccess] = React.useState(false);
   const [showReceipt, setShowReceipt] = React.useState(false);
   const [lastOrder, setLastOrder] = React.useState<any>(null);
   const [activeTab, setActiveTab] = React.useState<'products' | 'cart'>('products');
   const [viewMode, setViewMode] = React.useState<'grid' | 'list'>('grid');
+  const [isScannerOpen, setIsScannerOpen] = React.useState(false);
   const searchInputRef = React.useRef<HTMLInputElement>(null);
 
   const playSound = (type: 'add' | 'success' | 'click') => {
@@ -95,9 +100,9 @@ export const POS = () => {
     }
   }, [searchQuery, products]);
 
-  const categories = ['All', ...new Set(products.map(p => p.category))];
+  const categories = ['All', ...new Set((products || []).map(p => p.category))];
 
-  const filteredProducts = products.filter(p => {
+  const filteredProducts = (products || []).filter(p => {
     const matchesSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.barcode?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       p.category.toLowerCase().includes(searchQuery.toLowerCase());
@@ -136,7 +141,7 @@ export const POS = () => {
   };
 
   const subtotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const totalAmount = Math.max(0, subtotal - discount);
+  const totalAmount = subtotal;
   const change = receivedAmount ? parseFloat(receivedAmount) - totalAmount : 0;
 
   const handleCheckout = async () => {
@@ -154,7 +159,7 @@ export const POS = () => {
       // Add a small artificial delay to show loading state
       await new Promise(resolve => setTimeout(resolve, 800));
       
-      await recordSale(items, totalAmount, subtotal, discount, paymentType, customerName);
+      await recordSale(items, totalAmount, subtotal, 0, paymentType, customerName);
       playSound('success');
       
       // Trigger confetti
@@ -168,7 +173,7 @@ export const POS = () => {
       setLastOrder({
         items: cart.map(item => ({ name: item.name, quantity: item.quantity, price: item.price })),
         subtotal,
-        discount,
+        discount: 0,
         total: totalAmount,
         receivedAmount: parseFloat(receivedAmount) || totalAmount,
         change: Math.max(0, change),
@@ -183,7 +188,6 @@ export const POS = () => {
       setCustomerName('');
       setCustomerPhone('');
       setCustomerAddress('');
-      setDiscount(0);
       setReceivedAmount('');
       setPaymentType('cash');
       setShowSuccess(true);
@@ -196,9 +200,9 @@ export const POS = () => {
   };
 
   return (
-    <div className="flex flex-col lg:grid lg:grid-cols-12 gap-8 h-[calc(100vh-100px)] lg:h-[calc(100vh-140px)] relative">
+    <div className="flex flex-col lg:grid lg:grid-cols-12 gap-4 lg:gap-8 h-[calc(100vh-80px)] lg:h-[calc(100vh-140px)] relative overflow-hidden">
       {/* Mobile Tab Toggle */}
-      <div className="lg:hidden flex bg-white p-1 rounded-2xl border border-slate-100 shadow-sm mb-2">
+      <div className="lg:hidden flex bg-white p-1 rounded-2xl border border-slate-100 shadow-sm shrink-0">
         <button
           onClick={() => setActiveTab('products')}
           className={cn(
@@ -228,23 +232,31 @@ export const POS = () => {
 
       {/* Product Selection */}
       <div className={cn(
-        "lg:col-span-8 flex flex-col space-y-6 min-h-0",
+        "lg:col-span-8 flex flex-col space-y-4 lg:space-y-6 min-h-0",
         activeTab === 'cart' ? "hidden lg:flex" : "flex"
       )}>
-        <div className="space-y-6">
+        <div className="space-y-4 lg:space-y-6">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="hidden md:block">
               <h2 className="text-3xl font-black text-slate-900">POS Terminal</h2>
               <p className="text-slate-500 font-medium text-sm">Build an order by selecting items</p>
             </div>
-            <div className="flex items-center gap-3 w-full md:w-auto">
+            <div className="flex items-center gap-2 w-full md:w-auto">
+              <Button
+                variant="secondary"
+                onClick={() => setIsScannerOpen(true)}
+                className="h-12 px-4 rounded-2xl bg-white border-slate-100 shadow-sm hover:bg-brand-50 hover:text-brand-600 hover:border-brand-200 transition-all shrink-0"
+                title="Scan Barcode"
+              >
+                <Camera className="h-5 w-5" />
+              </Button>
               <div className="relative flex-1 md:w-80">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <input
                   ref={searchInputRef}
                   type="text"
                   placeholder="Search or scan..."
-                  className="w-full pl-10 pr-10 py-3 rounded-2xl border border-slate-100 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all font-medium text-sm"
+                  className="w-full pl-10 pr-10 py-3 rounded-2xl border border-slate-100 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all font-medium text-sm h-12"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -299,12 +311,12 @@ export const POS = () => {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto pr-2 -mr-2 scroll-smooth">
+        <div className="flex-1 overflow-y-auto pr-1 -mr-1 scroll-smooth">
           {filteredProducts.length > 0 ? (
             <div className={cn(
-              "pb-20 lg:pb-0",
+              "pb-32 lg:pb-0",
               viewMode === 'grid' 
-                ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4" 
+                ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3 lg:gap-4" 
                 : "flex flex-col gap-2"
             )}>
               <AnimatePresence mode="popLayout">
@@ -402,16 +414,22 @@ export const POS = () => {
 
       {/* Cart / Checkout */}
       <div className={cn(
-        "lg:col-span-4 bento-card flex flex-col overflow-hidden shadow-2xl shadow-brand-900/5 min-h-0",
-        activeTab === 'products' ? "hidden lg:flex" : "flex"
+        "lg:col-span-4 bento-card flex flex-col overflow-hidden shadow-2xl shadow-brand-900/5 min-h-0 bg-white",
+        activeTab === 'products' ? "hidden lg:flex" : "flex fixed inset-0 z-50 lg:relative lg:z-0"
       )}>
-        <div className="p-6 border-b border-slate-50 flex items-center justify-between bg-brand-600 text-white">
-          <div className="flex items-center gap-4">
-            <div className="bg-white/20 p-2 rounded-xl">
+        <div className="p-4 lg:p-6 border-b border-slate-50 flex items-center justify-between bg-brand-600 text-white shrink-0">
+          <div className="flex items-center gap-3 lg:gap-4">
+            <button 
+              onClick={() => setActiveTab('products')}
+              className="lg:hidden p-2 -ml-2 hover:bg-white/10 rounded-xl transition-colors"
+            >
+              <X className="h-6 w-6" />
+            </button>
+            <div className="bg-white/20 p-2 rounded-xl hidden sm:block">
               <ShoppingCart className="h-5 w-5" />
             </div>
             <div>
-              <h3 className="text-lg font-bold leading-none">Order Summary</h3>
+              <h3 className="text-base lg:text-lg font-bold leading-none">Order Summary</h3>
               <p className="text-brand-100 text-[10px] font-bold mt-1 uppercase tracking-widest">{cart.length} Items</p>
             </div>
           </div>
@@ -420,11 +438,11 @@ export const POS = () => {
             className="p-2 hover:bg-white/10 rounded-xl transition-colors"
             title="Clear Cart"
           >
-            <Trash2 className="h-4 w-4" />
+            <Trash2 className="h-5 w-5 lg:h-4 lg:w-4" />
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-slate-50/30">
           <AnimatePresence initial={false} mode="popLayout">
             {cart.map((item) => (
               <motion.div
@@ -478,7 +496,7 @@ export const POS = () => {
           )}
         </div>
 
-        <div className="p-6 bg-slate-50/80 backdrop-blur-md border-t border-slate-100 space-y-4">
+        <div className="p-4 lg:p-6 bg-white border-t border-slate-100 space-y-4 shrink-0 shadow-[0_-10px_20px_rgba(0,0,0,0.02)]">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <label className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Payment Method</label>
@@ -511,19 +529,7 @@ export const POS = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-1.5">
-              <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Discount</label>
-              <div className="relative">
-                <input 
-                  type="number"
-                  placeholder="0.00"
-                  value={discount || ''}
-                  onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)}
-                  className="w-full px-4 py-2 rounded-xl border border-slate-200 bg-white text-sm font-bold focus:ring-2 focus:ring-brand-500 outline-none"
-                />
-              </div>
-            </div>
+          <div className="grid grid-cols-1 gap-3">
             {paymentType === 'cash' && (
               <div className="space-y-1.5">
                 <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Received</label>
@@ -599,18 +605,6 @@ export const POS = () => {
           </AnimatePresence>
 
           <div className="pt-3 border-t border-slate-200 space-y-1">
-            {discount > 0 && (
-              <div className="flex items-center justify-between text-slate-400 text-[10px] font-bold">
-                <span>SUBTOTAL</span>
-                <span>{formatCurrency(subtotal)}</span>
-              </div>
-            )}
-            {discount > 0 && (
-              <div className="flex items-center justify-between text-rose-500 text-[10px] font-bold">
-                <span>DISCOUNT</span>
-                <span>-{formatCurrency(discount)}</span>
-              </div>
-            )}
             <div className="flex items-center justify-between">
               <span className="text-slate-400 font-bold uppercase text-[9px] tracking-widest">Total Amount</span>
               <span className="text-3xl font-black text-brand-600 tracking-tighter">{formatCurrency(totalAmount)}</span>
@@ -729,7 +723,7 @@ export const POS = () => {
         }
       >
         <div className="space-y-6">
-          <div className="bg-slate-50 p-6 rounded-[2rem] overflow-hidden border border-slate-100">
+          <div className="bg-slate-50 p-4 sm:p-6 rounded-[2rem] overflow-hidden border border-slate-100">
             {lastOrder && receiptSettings && (
               <Receipt 
                 settings={receiptSettings}
@@ -748,7 +742,7 @@ export const POS = () => {
             )}
           </div>
 
-          <div className="flex gap-3 no-print">
+          <div className="flex flex-col sm:flex-row gap-3 no-print">
             <Button 
               className="flex-[2] h-14 rounded-2xl font-black text-sm uppercase tracking-widest bg-orange-500 hover:bg-orange-600 shadow-lg shadow-orange-200" 
               onClick={() => window.print()}
@@ -766,6 +760,20 @@ export const POS = () => {
           </div>
         </div>
       </Modal>
+
+      {/* Barcode Scanner */}
+      {isScannerOpen && (
+        <BarcodeScanner 
+          products={products}
+          onScan={(code) => {
+            const product = products.find(p => p.barcode === code);
+            if (product && product.stock > 0) {
+              addToCart(product);
+            }
+          }}
+          onClose={() => setIsScannerOpen(false)}
+        />
+      )}
     </div>
   );
 };

@@ -49,9 +49,9 @@ export const useStore = create<AppState>((set, get) => ({
     set({ isLoading: true });
     try {
       const res = await api.get('/products');
-      set({ products: res.data, isLoading: false });
+      set({ products: Array.isArray(res.data) ? res.data : [], isLoading: false });
     } catch (err: any) {
-      set({ error: err.message, isLoading: false });
+      set({ error: err.message, isLoading: false, products: [] });
     }
   },
 

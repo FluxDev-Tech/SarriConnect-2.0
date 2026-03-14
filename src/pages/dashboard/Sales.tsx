@@ -17,7 +17,9 @@ import {
   CalendarDays,
   Eye,
   Printer,
-  X
+  X,
+  CheckCircle2,
+  Receipt as ReceiptIcon
 } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import { formatCurrency, cn } from '../../utils/helpers';
@@ -45,9 +47,10 @@ export const SalesHistory = () => {
     setIsLoading(true);
     try {
       const res = await api.get('/sales');
-      setSales(res.data);
+      setSales(Array.isArray(res.data) ? res.data : []);
     } catch (err) {
       console.error(err);
+      setSales([]);
     } finally {
       setIsLoading(false);
     }
@@ -59,24 +62,40 @@ export const SalesHistory = () => {
   }, [fetchSales, fetchReceiptSettings]);
 
   const handleViewDetails = async (saleId: number) => {
+    // Open modal immediately with basic info
+    const basicSale = sales.find(s => s.id === saleId);
+    if (basicSale) {
+      setSelectedSale({
+        ...basicSale,
+        itemsList: null // Signal that we are loading details
+      });
+      setIsModalOpen(true);
+    }
+
     setIsDetailsLoading(true);
     try {
       const res = await api.get(`/sales/${saleId}`);
       setSelectedSale(res.data);
-      setIsModalOpen(true);
     } catch (err) {
       console.error(err);
-      // Fallback: use data from list if detail fetch fails
-      const sale = sales.find(s => s.id === saleId);
-      if (sale) {
-        setSelectedSale({
-          ...sale,
-          items: [] // We don't have structured items here
-        });
-        setIsModalOpen(true);
-      }
+      // Fallback: if detail fetch fails, we already have basicSale set
     } finally {
       setIsDetailsLoading(false);
+    }
+  };
+
+  const handleMarkAsPaid = async (saleId: number) => {
+    try {
+      await api.put(`/sales/${saleId}/pay`);
+      // Update local state
+      setSales(prev => prev.map(s => s.id === saleId ? { ...s, paymentType: 'cash' } : s));
+      if (selectedSale?.id === saleId) {
+        setSelectedSale({ ...selectedSale, paymentType: 'cash' });
+      }
+      // Refresh stats in store
+      useStore.getState().fetchStats();
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -157,14 +176,14 @@ export const SalesHistory = () => {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
-          <h2 className="text-3xl font-bold text-gray-900">Sales History</h2>
-          <p className="text-gray-500">View and track all your transactions</p>
+          <h2 className="text-2xl lg:text-3xl font-black text-slate-900">Sales History</h2>
+          <p className="text-slate-500 font-medium text-sm">View and track all your transactions</p>
         </div>
-        <div className="flex gap-3">
-          <div className="bg-indigo-50 px-4 py-2 rounded-2xl border border-indigo-100 flex items-center gap-3">
-            <div className="bg-indigo-600 p-1.5 rounded-lg">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full lg:w-auto">
+          <div className="bg-indigo-50 px-4 py-3 rounded-2xl border border-indigo-100 flex items-center gap-3 shadow-sm">
+            <div className="bg-indigo-600 p-2 rounded-xl shadow-lg shadow-indigo-200">
               <Package className="h-4 w-4 text-white" />
             </div>
             <div>
@@ -172,8 +191,8 @@ export const SalesHistory = () => {
               <p className="text-lg font-black text-indigo-700">{filteredSales.length}</p>
             </div>
           </div>
-          <div className="bg-emerald-50 px-4 py-2 rounded-2xl border border-emerald-100 flex items-center gap-3">
-            <div className="bg-emerald-600 p-1.5 rounded-lg">
+          <div className="bg-emerald-50 px-4 py-3 rounded-2xl border border-emerald-100 flex items-center gap-3 shadow-sm">
+            <div className="bg-emerald-600 p-2 rounded-xl shadow-lg shadow-emerald-200">
               <DollarSign className="h-4 w-4 text-white" />
             </div>
             <div>
@@ -181,8 +200,8 @@ export const SalesHistory = () => {
               <p className="text-lg font-black text-emerald-700">{formatCurrency(cashTotal)}</p>
             </div>
           </div>
-          <div className="bg-rose-50 px-4 py-2 rounded-2xl border border-rose-100 flex items-center gap-3">
-            <div className="bg-rose-600 p-1.5 rounded-lg">
+          <div className="bg-rose-50 px-4 py-3 rounded-2xl border border-rose-100 flex items-center gap-3 shadow-sm">
+            <div className="bg-rose-600 p-2 rounded-xl shadow-lg shadow-rose-200">
               <Users className="h-4 w-4 text-white" />
             </div>
             <div>
@@ -219,7 +238,7 @@ export const SalesHistory = () => {
 
         <div className="flex flex-wrap items-center gap-3">
           {/* Payment Type Tabs */}
-          <div className="flex bg-white p-1 rounded-2xl border border-gray-100 shadow-sm">
+          <div className="flex bg-white p-1 rounded-2xl border border-gray-100 shadow-sm w-full sm:w-auto">
             {[
               { id: 'all', label: 'All', icon: LayoutGrid, activeClass: 'bg-indigo-600 text-white shadow-lg shadow-indigo-100' },
               { id: 'cash', label: 'Cash', icon: Banknote, activeClass: 'bg-emerald-600 text-white shadow-lg shadow-emerald-100' },
@@ -229,7 +248,7 @@ export const SalesHistory = () => {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
                 className={cn(
-                  "px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2",
+                  "flex-1 sm:flex-none px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2",
                   activeTab === tab.id 
                     ? tab.activeClass
                     : "text-gray-500 hover:bg-gray-50"
@@ -242,7 +261,7 @@ export const SalesHistory = () => {
           </div>
 
           {/* Date Presets */}
-          <div className="flex bg-white p-1 rounded-2xl border border-gray-100 shadow-sm overflow-x-auto max-w-full">
+          <div className="flex bg-white p-1 rounded-2xl border border-gray-100 shadow-sm overflow-x-auto no-scrollbar max-w-full">
             {[
               { id: 'all', label: 'All Time' },
               { id: 'today', label: 'Today' },
@@ -267,29 +286,29 @@ export const SalesHistory = () => {
           </div>
 
           {dateFilter === 'custom' && (
-            <div className="flex items-center gap-2 bg-white p-1 rounded-2xl border border-gray-100 shadow-sm animate-in fade-in slide-in-from-left-2">
+            <div className="flex items-center gap-2 bg-white p-1 rounded-2xl border border-gray-100 shadow-sm animate-in fade-in slide-in-from-left-2 w-full sm:w-auto">
               <input 
                 type="date" 
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="bg-transparent border-none text-[10px] font-bold text-gray-600 focus:ring-0 px-2 py-1"
+                className="flex-1 bg-transparent border-none text-[10px] font-bold text-gray-600 focus:ring-0 px-2 py-1"
               />
               <span className="text-gray-300 text-[10px] font-bold">TO</span>
               <input 
                 type="date" 
                 value={endDate}
                 onChange={(e) => setEndDate(e.target.value)}
-                className="bg-transparent border-none text-[10px] font-bold text-gray-600 focus:ring-0 px-2 py-1"
+                className="flex-1 bg-transparent border-none text-[10px] font-bold text-gray-600 focus:ring-0 px-2 py-1"
               />
             </div>
           )}
 
           {/* Sorting Dropdown */}
-          <div className="relative group">
+          <div className="relative group w-full sm:w-auto">
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as any)}
-              className="appearance-none bg-white pl-10 pr-10 py-2 rounded-2xl border border-gray-100 shadow-sm text-xs font-bold text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+              className="w-full sm:w-auto appearance-none bg-white pl-10 pr-10 py-2 rounded-2xl border border-gray-100 shadow-sm text-xs font-bold text-gray-600 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
             >
               <option value="date-desc">Newest First</option>
               <option value="date-asc">Oldest First</option>
@@ -300,57 +319,58 @@ export const SalesHistory = () => {
             <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400 pointer-events-none" />
           </div>
 
-          <div className="ml-auto px-4 py-2 bg-indigo-50 rounded-2xl border border-indigo-100">
+          <div className="w-full sm:w-auto sm:ml-auto px-4 py-2 bg-indigo-50 rounded-2xl border border-indigo-100 flex items-center justify-between sm:block">
             <p className="text-[9px] font-black text-indigo-400 uppercase tracking-widest">Filtered Total</p>
             <p className="text-sm font-black text-indigo-600">{formatCurrency(filteredTotal)}</p>
           </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+        {/* Desktop Table View */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-gray-50/50 border-b border-gray-100">
-                <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Date & Time</th>
-                <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Items</th>
-                <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Customer</th>
-                <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Type</th>
-                <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-right">Total</th>
-                <th className="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-right">Actions</th>
+              <tr className="bg-slate-50/50 border-b border-slate-100">
+                <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Date & Time</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Items</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Customer</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Type</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-right">Total</th>
+                <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-slate-50">
               {isLoading ? (
                 [1,2,3,4,5].map(i => (
                   <tr key={i} className="animate-pulse">
-                    <td colSpan={6} className="px-6 py-4"><div className="h-8 bg-gray-100 rounded-xl w-full" /></td>
+                    <td colSpan={6} className="px-6 py-4"><div className="h-8 bg-slate-100 rounded-xl w-full" /></td>
                   </tr>
                 ))
               ) : filteredSales.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-20 text-center">
-                    <div className="bg-gray-50 h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Clock className="h-8 w-8 text-gray-300" />
+                    <div className="bg-slate-50 h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Clock className="h-8 w-8 text-slate-300" />
                     </div>
-                    <h3 className="text-lg font-bold text-gray-900">No sales found</h3>
-                    <p className="text-gray-500">Try adjusting your filters or record a new sale.</p>
+                    <h3 className="text-lg font-bold text-slate-900">No sales found</h3>
+                    <p className="text-slate-500">Try adjusting your filters or record a new sale.</p>
                   </td>
                 </tr>
               ) : (
                 filteredSales.map((sale) => (
-                  <tr key={sale.id} className="hover:bg-gray-50/50 transition-colors group">
+                  <tr key={sale.id} className="hover:bg-slate-50/50 transition-colors group">
                     <td className="px-6 py-4">
                       <div className="flex flex-col">
-                        <span className="font-bold text-gray-900">{new Date(sale.createdAt).toLocaleDateString()}</span>
-                        <span className="text-xs text-gray-400">{new Date(sale.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        <span className="font-bold text-slate-900">{new Date(sale.createdAt).toLocaleDateString()}</span>
+                        <span className="text-xs text-slate-400">{new Date(sale.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="text-sm text-gray-600 line-clamp-1 max-w-xs font-medium">{sale.items}</p>
+                      <p className="text-sm text-slate-600 line-clamp-1 max-w-xs font-medium">{sale.items}</p>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-sm font-bold text-gray-900">{sale.customerName || 'Walk-in'}</span>
+                      <span className="text-sm font-bold text-slate-900">{sale.customerName || 'Walk-in'}</span>
                     </td>
                     <td className="px-6 py-4">
                       <div className={cn(
@@ -362,18 +382,18 @@ export const SalesHistory = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <span className="font-black text-gray-900">{formatCurrency(sale.totalPrice)}</span>
+                      <span className="font-black text-slate-900">{formatCurrency(sale.totalPrice)}</span>
                     </td>
                     <td className="px-6 py-4 text-right">
                       <Button
                         variant="secondary"
                         size="sm"
-                        className="rounded-xl h-9 px-4 font-bold text-xs"
+                        className="rounded-xl h-9 px-4 font-bold text-xs bg-slate-100 hover:bg-brand-50 hover:text-brand-600 border-none transition-all"
                         onClick={() => handleViewDetails(sale.id)}
                         isLoading={isDetailsLoading && selectedSale?.id === sale.id}
                       >
-                        <Eye className="h-3.5 w-3.5 mr-1.5" />
-                        Details
+                        <ReceiptIcon className="h-3.5 w-3.5 mr-1.5" />
+                        Receipt
                       </Button>
                     </td>
                   </tr>
@@ -381,6 +401,71 @@ export const SalesHistory = () => {
               )}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile Card View */}
+        <div className="md:hidden divide-y divide-slate-50">
+          {isLoading ? (
+            [1,2,3].map(i => (
+              <div key={i} className="p-4 animate-pulse space-y-3">
+                <div className="h-4 bg-slate-100 rounded w-1/3" />
+                <div className="h-10 bg-slate-100 rounded w-full" />
+                <div className="flex justify-between">
+                  <div className="h-4 bg-slate-100 rounded w-1/4" />
+                  <div className="h-4 bg-slate-100 rounded w-1/4" />
+                </div>
+              </div>
+            ))
+          ) : filteredSales.length === 0 ? (
+            <div className="px-6 py-20 text-center">
+              <div className="bg-slate-50 h-16 w-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Clock className="h-8 w-8 text-slate-300" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900">No sales found</h3>
+              <p className="text-slate-500 text-sm">Try adjusting your filters</p>
+            </div>
+          ) : (
+            filteredSales.map((sale) => (
+              <div key={sale.id} className="p-4 space-y-4 active:bg-slate-50 transition-colors">
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-col">
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                      {new Date(sale.createdAt).toLocaleDateString()} • {new Date(sale.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                    <span className="font-black text-slate-900 mt-0.5">{sale.customerName || 'Walk-in'}</span>
+                  </div>
+                  <div className={cn(
+                    "inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider",
+                    sale.paymentType === 'cash' ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
+                  )}>
+                    {sale.paymentType === 'cash' ? <Banknote className="h-3 w-3" /> : <Clock className="h-3 w-3" />}
+                    {sale.paymentType}
+                  </div>
+                </div>
+                
+                <div className="bg-slate-50/50 p-3 rounded-2xl border border-slate-100">
+                  <p className="text-xs text-slate-600 font-medium line-clamp-2">{sale.items}</p>
+                </div>
+
+                <div className="flex items-center justify-between pt-2">
+                  <div className="flex flex-col">
+                    <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Total Amount</span>
+                    <span className="text-lg font-black text-brand-600">{formatCurrency(sale.totalPrice)}</span>
+                  </div>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="rounded-xl h-10 px-5 font-black text-xs shadow-sm bg-white hover:bg-brand-50 hover:text-brand-600 border-slate-100"
+                    onClick={() => handleViewDetails(sale.id)}
+                    isLoading={isDetailsLoading && selectedSale?.id === sale.id}
+                  >
+                    <ReceiptIcon className="h-4 w-4 mr-2" />
+                    Receipt
+                  </Button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
@@ -390,17 +475,31 @@ export const SalesHistory = () => {
         onClose={() => setIsModalOpen(false)}
         title={
           <div className="flex items-center gap-2">
-            <span className="text-lg">📄</span>
-            <span>Sale Details</span>
+            <ReceiptIcon className="h-5 w-5 text-brand-600" />
+            <span className="font-black uppercase tracking-tight">Transaction Receipt</span>
           </div>
         }
       >
         <div className="space-y-6">
-          <div className="bg-slate-50 p-6 rounded-[2rem] overflow-hidden border border-slate-100">
+          <div className="bg-slate-50 p-2 sm:p-6 rounded-[2rem] overflow-hidden border border-slate-100 relative">
+            {isDetailsLoading && !selectedSale?.itemsList && (
+              <div className="absolute inset-0 z-10 bg-white/60 backdrop-blur-[2px] flex flex-col items-center justify-center gap-4">
+                <div className="w-10 h-10 border-4 border-brand-600 border-t-transparent rounded-full animate-spin" />
+                <p className="text-[10px] font-black text-brand-600 uppercase tracking-widest">Loading Items...</p>
+              </div>
+            )}
+            
             {selectedSale && receiptSettings && (
               <Receipt 
                 settings={receiptSettings}
-                items={selectedSale.itemsList || []}
+                items={selectedSale.itemsList || (selectedSale.items ? selectedSale.items.split(',').map((item: string) => {
+                  const match = item.match(/(.+) \(x(\d+)\)/);
+                  return {
+                    name: match ? match[1] : item,
+                    quantity: match ? parseInt(match[2]) : 1,
+                    price: 0 
+                  };
+                }) : [])}
                 subtotal={selectedSale.subtotal}
                 discount={selectedSale.discount}
                 total={selectedSale.totalPrice}
@@ -414,17 +513,20 @@ export const SalesHistory = () => {
                 receiptNumber={`SALE_${selectedSale.id}`}
               />
             )}
-            {!selectedSale?.itemsList && selectedSale && (
-              <div className="text-center py-8 space-y-2">
-                <p className="text-slate-400 text-sm font-medium">Detailed item list not available for this legacy record.</p>
-                <p className="text-slate-900 font-bold">Total: {formatCurrency(selectedSale.totalPrice)}</p>
-              </div>
-            )}
           </div>
 
-          <div className="flex gap-3 no-print">
+          <div className="flex flex-col sm:flex-row gap-3 no-print">
+            {selectedSale?.paymentType === 'debt' && (
+              <Button 
+                className="flex-1 h-14 rounded-2xl font-black text-sm uppercase tracking-widest bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-200" 
+                onClick={() => handleMarkAsPaid(selectedSale.id)}
+              >
+                <CheckCircle2 className="mr-2 h-5 w-5" />
+                Mark as Paid
+              </Button>
+            )}
             <Button 
-              className="flex-[2] h-14 rounded-2xl font-black text-sm uppercase tracking-widest bg-brand-600 hover:bg-brand-700 shadow-lg shadow-brand-200" 
+              className="flex-1 h-14 rounded-2xl font-black text-sm uppercase tracking-widest bg-brand-600 hover:bg-brand-700 shadow-lg shadow-brand-200" 
               onClick={() => window.print()}
             >
               <Printer className="mr-2 h-5 w-5" />

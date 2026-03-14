@@ -36,8 +36,17 @@ export const Receipt: React.FC<ReceiptProps> = ({
 }) => {
   const d = new Date(date);
 
+  if (!settings) {
+    return (
+      <div className="p-8 text-center text-slate-400 bg-white rounded-2xl border border-slate-100">
+        <p className="font-bold">Receipt settings not found.</p>
+        <p className="text-xs mt-2">Please configure your store details in settings.</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="bg-white text-slate-900 p-6 shadow-2xl min-h-[600px] flex flex-col font-sans text-sm border border-slate-100 print-receipt max-w-md mx-auto rounded-xl">
+    <div className="bg-white text-slate-900 p-4 sm:p-8 shadow-2xl min-h-[600px] flex flex-col font-sans text-sm border border-slate-100 print-receipt w-full max-w-md mx-auto rounded-2xl">
       {/* Header */}
       <div className="text-center space-y-1 mb-4">
         <div className="flex justify-center mb-2">
@@ -70,14 +79,16 @@ export const Receipt: React.FC<ReceiptProps> = ({
         </div>
         <div className="flex justify-between">
           <span className="font-bold text-slate-900">Status:</span>
-          <span className="font-bold text-emerald-600 uppercase tracking-wider">PAID</span>
+          <span className={cn("font-bold uppercase tracking-wider", paymentType === 'cash' ? "text-emerald-600" : "text-rose-600")}>
+            {paymentType === 'cash' ? 'PAID' : 'UNPAID'}
+          </span>
         </div>
       </div>
 
       {/* Customer Section */}
       {customerName && (
-        <div className="mt-4 p-3 bg-orange-50/30 border-l-4 border-orange-500 rounded-r-xl space-y-1">
-          <p className="text-[9px] font-black text-orange-600 uppercase tracking-widest">Customer</p>
+        <div className="mt-4 p-3 bg-slate-50 border-l-4 border-slate-900 rounded-r-xl space-y-1">
+          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Customer Details</p>
           <p className="text-xs font-black text-slate-900">{customerName}</p>
           {customerPhone && <p className="text-[10px] text-slate-500 flex items-center gap-1">📱 {customerPhone}</p>}
           {customerAddress && <p className="text-[10px] text-slate-500 flex items-center gap-1">🏠 {customerAddress}</p>}
@@ -87,32 +98,62 @@ export const Receipt: React.FC<ReceiptProps> = ({
       <div className="border-t border-black border-dotted my-4"></div>
 
       {/* Items Section */}
-      <div className="space-y-4">
+      <div className="space-y-4 flex-1">
         <p className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em] mb-2">Items Purchased</p>
-        {items.map((item, i) => (
-          <div key={i} className="space-y-0.5">
-            <div className="flex justify-between items-start">
-              <span className="font-black text-slate-900 text-xs">{item.name}</span>
-              <span className="font-black text-slate-900 text-xs">{formatCurrency(item.price * item.quantity)}</span>
+        <div className="space-y-3">
+          {items.map((item, i) => (
+            <div key={i} className="space-y-0.5">
+              <div className="flex justify-between items-start">
+                <span className="font-black text-slate-900 text-xs flex-1 pr-4">{item.name}</span>
+                <span className="font-black text-slate-900 text-xs whitespace-nowrap">{formatCurrency(item.price * item.quantity)}</span>
+              </div>
+              <p className="text-[10px] text-slate-400 font-medium">
+                {formatCurrency(item.price)} × {item.quantity}
+              </p>
             </div>
-            <p className="text-[10px] text-slate-400 font-medium">
-              {formatCurrency(item.price)} × {item.quantity}
-            </p>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
-      <div className="border-t border-slate-900 my-4"></div>
+      <div className="border-t border-slate-200 my-4"></div>
 
-      {/* Total Section */}
-      <div className="flex justify-between items-center mb-4">
-        <span className="text-lg font-black text-slate-900">TOTAL:</span>
-        <span className="text-xl font-black text-slate-900">{formatCurrency(total)}</span>
+      {/* Summary Section */}
+      <div className="space-y-1.5 mb-4">
+        {subtotal !== undefined && subtotal !== total && (
+          <div className="flex justify-between text-[11px]">
+            <span className="text-slate-500 font-bold">Subtotal:</span>
+            <span className="font-bold text-slate-900">{formatCurrency(subtotal)}</span>
+          </div>
+        )}
+        {discount !== undefined && discount > 0 && (
+          <div className="flex justify-between text-[11px]">
+            <span className="text-slate-500 font-bold">Discount:</span>
+            <span className="font-bold text-rose-600">-{formatCurrency(discount)}</span>
+          </div>
+        )}
+        <div className="flex justify-between items-center pt-1">
+          <span className="text-sm font-black text-slate-900 uppercase">Total Amount:</span>
+          <span className="text-lg font-black text-brand-600">{formatCurrency(total)}</span>
+        </div>
+        
+        {paymentType === 'cash' && receivedAmount !== undefined && (
+          <>
+            <div className="border-t border-slate-100 my-2"></div>
+            <div className="flex justify-between text-[11px]">
+              <span className="text-slate-500 font-bold">Amount Received:</span>
+              <span className="font-bold text-slate-900">{formatCurrency(receivedAmount)}</span>
+            </div>
+            <div className="flex justify-between text-[11px]">
+              <span className="text-slate-500 font-bold">Change:</span>
+              <span className="font-bold text-emerald-600">{formatCurrency(change || 0)}</span>
+            </div>
+          </>
+        )}
       </div>
 
       {paymentType === 'debt' && customerName && (
-        <div className="bg-blue-50 text-blue-600 py-2 px-4 rounded-lg text-[10px] font-bold text-center mb-4 flex items-center justify-center gap-2">
-          <span>📒</span> TO BE PAID BY: {customerName}
+        <div className="bg-rose-50 text-rose-600 py-3 px-4 rounded-xl text-[10px] font-black text-center mb-6 flex items-center justify-center gap-2 border border-rose-100">
+          <span>⚠️</span> BALANCE TO BE PAID BY: {customerName.toUpperCase()}
         </div>
       )}
 

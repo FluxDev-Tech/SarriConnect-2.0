@@ -86,24 +86,24 @@ const StatCard = ({ title, value, icon: Icon, trend, color, delay = 0 }: any) =>
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ delay, duration: 0.5 }}
-    className="bento-card p-6 stat-card-glow"
+    className="bento-card p-4 sm:p-6 stat-card-glow"
   >
-    <div className="flex items-center justify-between mb-4">
-      <div className={cn("p-3 rounded-2xl shadow-lg", color)}>
-        <Icon className="h-6 w-6 text-white" />
+    <div className="flex items-center justify-between mb-3 sm:mb-4">
+      <div className={cn("p-2.5 sm:p-3 rounded-xl sm:rounded-2xl shadow-lg", color)}>
+        <Icon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
       </div>
       {trend && (
         <div className={cn(
-          "flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider",
+          "flex items-center gap-1 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-[9px] sm:text-[10px] font-black uppercase tracking-wider",
           trend > 0 ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
         )}>
-          {trend > 0 ? <ArrowUpRight className="h-3 w-3" /> : <ArrowDownRight className="h-3 w-3" />}
+          {trend > 0 ? <ArrowUpRight className="h-2.5 w-2.5 sm:h-3 sm:w-3" /> : <ArrowDownRight className="h-2.5 w-2.5 sm:h-3 sm:w-3" />}
           {Math.abs(trend)}%
         </div>
       )}
     </div>
-    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">{title}</p>
-    <h3 className="text-3xl font-black text-slate-900">{value}</h3>
+    <p className="text-[10px] sm:text-xs font-bold text-slate-400 uppercase tracking-widest mb-0.5 sm:mb-1">{title}</p>
+    <h3 className="text-2xl sm:text-3xl font-black text-slate-900">{value}</h3>
   </motion.div>
 );
 
@@ -116,7 +116,7 @@ export const Dashboard = () => {
     fetchProducts();
   }, [fetchStats, fetchProducts]);
 
-  const lowStockCount = products.filter(p => p.stock <= 5).length;
+  const lowStockCount = (products || []).filter(p => p.stock <= 5).length;
   const avgOrderValue = stats ? (stats.totalRevenue / (stats.totalSalesCount || 1)) : 0;
 
   const COLORS = ['#3354ff', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6', '#06b6d4'];
@@ -130,14 +130,14 @@ export const Dashboard = () => {
 
   return (
     <div className="space-y-10">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
         <div>
-          <h2 className="text-4xl font-black text-slate-900">Store Overview</h2>
-          <p className="text-slate-500 font-medium mt-1">Real-time performance analytics for your store</p>
+          <h2 className="text-3xl lg:text-4xl font-black text-slate-900">Store Overview</h2>
+          <p className="text-slate-500 font-medium mt-1 text-sm lg:text-base">Real-time performance analytics for your store</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
         <StatCard 
           title="Total Sales" 
           value={stats.totalSalesCount} 
@@ -173,20 +173,20 @@ export const Dashboard = () => {
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
         <motion.div 
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.5 }}
-          className="lg:col-span-8 bento-card p-8"
+          className="lg:col-span-8 bento-card p-6 lg:p-8"
         >
-          <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center justify-between mb-6 lg:mb-8">
             <div>
-              <h3 className="text-xl font-bold text-slate-900">Revenue Analytics</h3>
-              <p className="text-sm text-slate-400 font-medium">Daily revenue performance</p>
+              <h3 className="text-lg lg:text-xl font-bold text-slate-900">Revenue Analytics</h3>
+              <p className="text-xs lg:text-sm text-slate-400 font-medium">Daily revenue performance</p>
             </div>
           </div>
-          <div className="h-[350px]">
+          <div className="h-[250px] sm:h-[350px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={stats.dailySales.map(d => ({ ...d, total: d.cash + d.debt }))}>
                 <defs>
@@ -229,40 +229,40 @@ export const Dashboard = () => {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.6 }}
-          className="lg:col-span-4 bento-card p-8 flex flex-col"
+          className="lg:col-span-4 bento-card p-6 lg:p-8 flex flex-col"
         >
-          <div className="flex items-center justify-between mb-8">
-            <h3 className="text-xl font-bold text-slate-900">Recent Activity</h3>
+          <div className="flex items-center justify-between mb-6 lg:mb-8">
+            <h3 className="text-lg lg:text-xl font-bold text-slate-900">Recent Activity</h3>
             <Link to="/sales" className="p-2 hover:bg-slate-50 rounded-xl transition-colors">
               <ArrowUpRight className="h-5 w-5 text-slate-400" />
             </Link>
           </div>
-          <div className="flex-1 overflow-y-auto pr-2 -mr-2">
+          <div className="flex-1 overflow-y-auto pr-2 -mr-2 max-h-[400px] lg:max-h-none">
             <RecentSalesList />
           </div>
         </motion.div>
       </div>
 
-      <div className="grid grid-cols-1 gap-8">
+      <div className="grid grid-cols-1 gap-6 lg:gap-8">
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7 }}
-          className="bento-card p-8"
+          className="bento-card p-6 lg:p-8"
         >
-          <h3 className="text-xl font-bold text-slate-900 mb-2">Top Selling Products</h3>
-          <p className="text-sm text-slate-400 font-medium mb-8">Most popular items by volume</p>
-          <div className="h-[300px]">
+          <h3 className="text-lg lg:text-xl font-bold text-slate-900 mb-1 lg:mb-2">Top Selling Products</h3>
+          <p className="text-xs lg:text-sm text-slate-400 font-medium mb-6 lg:mb-8">Most popular items by volume</p>
+          <div className="h-[250px] sm:h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={stats.topProducts} layout="vertical" margin={{ left: 20 }}>
+              <BarChart data={stats.topProducts} layout="vertical" margin={{ left: 0, right: 20 }}>
                 <XAxis type="number" hide />
                 <YAxis 
                   dataKey="name" 
                   type="category" 
                   axisLine={false} 
                   tickLine={false} 
-                  tick={{fontSize: 11, fill: '#64748b', fontWeight: 600}} 
-                  width={100} 
+                  tick={{fontSize: 9, fill: '#64748b', fontWeight: 600}} 
+                  width={80} 
                 />
                 <Tooltip 
                   cursor={{fill: '#f8fafc'}}

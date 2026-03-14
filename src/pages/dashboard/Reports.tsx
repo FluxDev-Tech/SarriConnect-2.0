@@ -20,8 +20,13 @@ export const Reports = () => {
   React.useEffect(() => {
     fetchStats();
     const fetchSales = async () => {
-      const res = await api.get('/sales');
-      setSales(res.data);
+      try {
+        const res = await api.get('/sales');
+        setSales(Array.isArray(res.data) ? res.data : []);
+      } catch (err) {
+        console.error(err);
+        setSales([]);
+      }
     };
     fetchSales();
   }, [fetchStats]);

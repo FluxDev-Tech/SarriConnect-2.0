@@ -64,16 +64,14 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useStore();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [isCollapsed, setIsCollapsed] = React.useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = React.useState(false);
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
-  const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
-  const closeMobileMenu = () => setIsMobileMenuOpen(false);
   const toggleSidebar = () => setIsCollapsed(!isCollapsed);
 
   const menuItems = [
@@ -105,16 +103,24 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
         </button>
 
         <div className={cn("flex items-center gap-4 mb-12", isCollapsed ? "justify-center" : "px-2")}>
-          <div className="bg-brand-600 p-2.5 rounded-2xl shadow-lg shadow-brand-200 shrink-0">
-            <Store className="h-6 w-6 text-white" />
+          <div className="bg-white p-1 rounded-full shadow-lg shadow-brand-200 shrink-0 border border-slate-100">
+            <img 
+              src="https://raw.githubusercontent.com/johnlawrencemartinez/sariconnect-assets/main/logo.png" 
+              alt="Logo" 
+              className="h-10 w-10 object-contain rounded-full"
+              onError={(e) => {
+                e.currentTarget.src = "https://api.iconify.design/lucide:store.svg?color=%234f46e5";
+                e.currentTarget.className = "h-6 w-6 m-2";
+              }}
+            />
           </div>
           {!isCollapsed && (
             <motion.div
               initial={{ opacity: 0, x: -10 }}
               animate={{ opacity: 1, x: 0 }}
             >
-              <h1 className="text-xl font-bold text-slate-900 tracking-tight leading-none">SariConnect</h1>
-              <p className="text-[10px] font-bold text-brand-500 uppercase tracking-widest mt-1">Store Manager</p>
+              <h1 className="text-xl font-black text-slate-900 tracking-tight leading-none uppercase">SariConnect</h1>
+              <p className="text-[10px] font-black text-brand-500 uppercase tracking-widest mt-1">Store Manager</p>
             </motion.div>
           )}
         </div>
@@ -163,87 +169,11 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
         </div>
       </aside>
 
-      {/* Mobile Menu Overlay */}
-      <AnimatePresence>
-        {isMobileMenuOpen && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={closeMobileMenu}
-              className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 lg:hidden"
-            />
-            <motion.div
-              initial={{ x: '-100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '-100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed inset-y-0 left-0 w-72 bg-white z-[60] p-6 shadow-2xl lg:hidden flex flex-col"
-            >
-              <div className="flex items-center justify-between mb-10 px-2">
-                <div className="flex items-center gap-3">
-                  <div className="bg-brand-600 p-2 rounded-lg">
-                    <Store className="h-6 w-6 text-white" />
-                  </div>
-                  <h1 className="text-xl font-bold text-slate-900 tracking-tight">SariConnect</h1>
-                </div>
-                <button onClick={closeMobileMenu} className="p-2 hover:bg-slate-100 rounded-lg transition-colors">
-                  <X className="h-6 w-6 text-slate-500" />
-                </button>
-              </div>
-
-              <nav className="flex-1 space-y-2">
-                {menuItems.map((item) => (
-                  <SidebarItem
-                    key={item.to}
-                    to={item.to}
-                    icon={item.icon}
-                    label={item.label}
-                    active={location.pathname === item.to}
-                    onClick={closeMobileMenu}
-                  />
-                ))}
-              </nav>
-
-              <div className="mt-auto pt-6 border-t border-slate-100">
-                <div className="flex items-center gap-3 px-2 mb-6">
-                  <div className="h-10 w-10 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 font-bold">
-                    {user?.name.charAt(0)}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-slate-900 truncate">{user?.name}</p>
-                    <p className="text-xs text-slate-500 truncate capitalize">{user?.role}</p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => {
-                    handleLogout();
-                    closeMobileMenu();
-                  }}
-                  className="flex items-center gap-3 w-full px-4 py-3 text-slate-500 hover:bg-rose-50 hover:text-rose-600 rounded-xl transition-all"
-                >
-                  <LogOut className="h-5 w-5" />
-                  <span className="font-medium">Logout</span>
-                </button>
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
-
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top Navbar */}
         <header className="h-20 bg-white border-b border-slate-100 flex items-center justify-between px-4 sm:px-8 sticky top-0 z-30 shrink-0">
           <div className="flex items-center gap-4">
-            <button 
-              onClick={toggleMobileMenu}
-              className="p-2.5 hover:bg-brand-50 rounded-2xl transition-all text-brand-600 lg:hidden"
-            >
-              <Menu className="h-6 w-6" />
-            </button>
-            
             <div className="hidden sm:block">
               <h2 className="text-lg font-bold text-slate-900 tracking-tight">{currentPage}</h2>
               <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
@@ -264,11 +194,6 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
               />
             </div>
 
-            <button className="p-2.5 text-slate-400 hover:bg-slate-50 hover:text-slate-600 rounded-2xl transition-all relative">
-              <Bell className="h-5 w-5" />
-              <span className="absolute top-2 right-2 w-2 h-2 bg-rose-500 rounded-full border-2 border-white"></span>
-            </button>
-
             <div className="h-8 w-[1px] bg-slate-100 mx-1 hidden sm:block"></div>
 
             <Link 
@@ -278,10 +203,6 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
               <Plus className="h-4 w-4" />
               <span>New Sale</span>
             </Link>
-
-            <div className="lg:hidden h-10 w-10 rounded-2xl bg-brand-100 flex items-center justify-center text-brand-700 font-bold text-sm shadow-sm">
-              {user?.name.charAt(0)}
-            </div>
           </div>
         </header>
 
@@ -293,56 +214,108 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
         </main>
 
         {/* Mobile Bottom Navigation */}
-        <nav className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-xl border-t border-slate-100 px-6 py-3 flex items-center justify-between lg:hidden z-40">
-          <Link 
-            to="/" 
-            className={cn(
-              "flex flex-col items-center gap-1 transition-all",
-              location.pathname === '/' ? "text-brand-600" : "text-slate-400"
-            )}
-          >
-            <LayoutDashboard className="h-6 w-6" />
-            <span className="text-[10px] font-bold uppercase tracking-wider">Home</span>
-          </Link>
-          <Link 
-            to="/pos" 
-            className={cn(
-              "flex flex-col items-center gap-1 transition-all",
-              location.pathname === '/pos' ? "text-brand-600" : "text-slate-400"
-            )}
-          >
-            <ShoppingCart className="h-6 w-6" />
-            <span className="text-[10px] font-bold uppercase tracking-wider">POS</span>
-          </Link>
-          <div className="relative -top-6">
-            <Link 
-              to="/scanner"
-              className="bg-brand-600 text-white p-4 rounded-full shadow-xl shadow-brand-200 border-4 border-[#F8FAFC] active:scale-90 transition-all flex items-center justify-center"
-            >
-              <Scan className="h-6 w-6" />
-            </Link>
-          </div>
-          <Link 
-            to="/inventory" 
-            className={cn(
-              "flex flex-col items-center gap-1 transition-all",
-              location.pathname === '/inventory' ? "text-brand-600" : "text-slate-400"
-            )}
-          >
-            <BarChart3 className="h-6 w-6" />
-            <span className="text-[10px] font-bold uppercase tracking-wider">Stock</span>
-          </Link>
-          <Link 
-            to="/sales" 
-            className={cn(
-              "flex flex-col items-center gap-1 transition-all",
-              location.pathname === '/sales' ? "text-brand-600" : "text-slate-400"
-            )}
-          >
-            <History className="h-6 w-6" />
-            <span className="text-[10px] font-bold uppercase tracking-wider">Sales</span>
-          </Link>
-        </nav>
+        <div className="fixed bottom-6 left-4 right-4 lg:hidden z-40">
+          <nav className="bg-slate-900/90 backdrop-blur-xl border border-white/10 px-2 py-2 flex items-center justify-around rounded-[2rem] shadow-2xl shadow-slate-900/40">
+            {[
+              { to: '/', icon: LayoutDashboard, label: 'Home' },
+              { to: '/pos', icon: ShoppingCart, label: 'POS' },
+              { to: '/products', icon: Package, label: 'Prod' },
+              { to: '/scanner', icon: Scan, label: 'Scan', primary: true },
+              { to: '/inventory', icon: BarChart3, label: 'Inv' },
+              { to: '/sales', icon: History, label: 'Sales' },
+              { to: '/debts', icon: CreditCard, label: 'Utang' },
+            ].map((item) => {
+              const isActive = location.pathname === item.to;
+              const Icon = item.icon;
+              
+              return (
+                <Link 
+                  key={item.to}
+                  to={item.to} 
+                  className={cn(
+                    "relative flex flex-col items-center justify-center transition-all duration-300 py-2 min-w-[40px]",
+                    item.primary ? "-top-6" : "",
+                    isActive ? "text-white" : "text-slate-400 hover:text-slate-200"
+                  )}
+                >
+                  {isActive && !item.primary && (
+                    <motion.div 
+                      layoutId="nav-active-bg"
+                      className="absolute inset-0 bg-brand-600/20 rounded-2xl -z-10"
+                      transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                    />
+                  )}
+                  
+                  <div className={cn(
+                    "transition-transform duration-300",
+                    isActive ? "scale-110" : "scale-100",
+                    item.primary ? "bg-brand-600 p-4 rounded-full shadow-xl shadow-brand-500/40 border-4 border-slate-900 text-white" : ""
+                  )}>
+                    <Icon className={cn(item.primary ? "h-6 w-6" : "h-5 w-5")} />
+                  </div>
+                  
+                  {!item.primary && (
+                    <span className={cn(
+                      "text-[9px] font-black uppercase tracking-tighter mt-1 transition-all",
+                      isActive ? "opacity-100 translate-y-0" : "opacity-60"
+                    )}>
+                      {item.label}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+
+            {/* Settings/Logout Button */}
+            <div className="relative">
+              <button 
+                onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+                className={cn(
+                  "flex flex-col items-center justify-center py-2 min-w-[44px] transition-all duration-300",
+                  isSettingsOpen ? "text-white" : "text-slate-400"
+                )}
+              >
+                {isSettingsOpen && (
+                  <div className="absolute inset-0 bg-brand-600/20 rounded-2xl -z-10" />
+                )}
+                <Settings className={cn("h-5 w-5 transition-transform", isSettingsOpen ? "rotate-45 scale-110" : "")} />
+                <span className="text-[9px] font-black uppercase tracking-tighter mt-1 opacity-60">Set</span>
+              </button>
+              
+              <AnimatePresence>
+                {isSettingsOpen && (
+                  <>
+                    <motion.div 
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      onClick={() => setIsSettingsOpen(false)}
+                      className="fixed inset-0 z-[-1]"
+                    />
+                    <motion.div
+                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                      className="absolute bottom-full right-0 mb-6 w-48 bg-slate-900 border border-white/10 rounded-[2rem] shadow-2xl p-2 overflow-hidden"
+                    >
+                      <div className="px-4 py-3 border-b border-white/5 mb-1">
+                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Account</p>
+                        <p className="text-xs font-bold text-white truncate">{user?.name}</p>
+                      </div>
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center gap-3 w-full px-4 py-3 text-rose-400 hover:bg-rose-500/10 rounded-2xl transition-all"
+                      >
+                        <LogOut className="h-4 w-4" />
+                        <span className="font-black text-[10px] uppercase tracking-widest">Logout System</span>
+                      </button>
+                    </motion.div>
+                  </>
+                )}
+              </AnimatePresence>
+            </div>
+          </nav>
+        </div>
       </div>
     </div>
   );

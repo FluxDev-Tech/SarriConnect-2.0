@@ -36,20 +36,17 @@ const SidebarItem: React.FC<{
     to={to}
     onClick={onClick}
     className={cn(
-      "flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all duration-300 group relative",
+      "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative mx-2",
       active 
-        ? "bg-brand-600 text-white shadow-lg shadow-brand-200/50" 
-        : "text-slate-500 hover:bg-brand-50 hover:text-brand-600"
+        ? "bg-brand-50 text-brand-600" 
+        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
     )}
   >
-    <Icon className={cn("h-5 w-5 shrink-0 transition-transform duration-300", active ? "text-white" : "group-hover:scale-110 group-hover:text-brand-600")} />
-    {!collapsed && <span className="font-semibold text-sm whitespace-nowrap">{label}</span>}
+    <Icon className={cn("h-5 w-5 shrink-0 transition-colors duration-200", active ? "text-brand-600" : "text-slate-400 group-hover:text-slate-600")} />
+    {!collapsed && <span className={cn("text-sm whitespace-nowrap", active ? "font-bold" : "font-medium")}>{label}</span>}
     
     {active && !collapsed && (
-      <motion.div 
-        layoutId="active-pill"
-        className="absolute -left-1 w-1.5 h-6 bg-brand-400 rounded-full"
-      />
+      <div className="absolute left-0 w-1 h-6 bg-brand-500 rounded-r-full" />
     )}
     
     {collapsed && (
@@ -87,45 +84,30 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
   const currentPage = menuItems.find(item => item.to === location.pathname)?.label || 'Dashboard';
 
   return (
-    <div className="flex h-screen bg-[#F8FAFC] overflow-hidden">
+    <div className="flex h-screen bg-[#F6F6F6] overflow-hidden">
       {/* Desktop Sidebar */}
       <aside 
         className={cn(
-          "bg-white border-r border-slate-100 flex flex-col transition-all duration-500 ease-in-out hidden lg:flex relative z-40",
-          isCollapsed ? "w-24 p-4" : "w-72 p-8"
+          "bg-white border-r border-slate-200 flex flex-col transition-all duration-300 ease-in-out hidden lg:flex relative z-40",
+          isCollapsed ? "w-20" : "w-64"
         )}
       >
-        <button 
-          onClick={toggleSidebar}
-          className="absolute -right-3 top-10 bg-white border border-slate-100 rounded-full p-1 shadow-sm hover:bg-slate-50 transition-colors z-50"
-        >
-          {isCollapsed ? <ChevronRight className="h-4 w-4 text-slate-400" /> : <ChevronLeft className="h-4 w-4 text-slate-400" />}
-        </button>
-
-        <div className={cn("flex items-center gap-4 mb-12", isCollapsed ? "justify-center" : "px-2")}>
-          <div className="bg-white p-1 rounded-full shadow-lg shadow-brand-200 shrink-0 border border-slate-100">
-            <img 
-              src="https://raw.githubusercontent.com/johnlawrencemartinez/sariconnect-assets/main/logo.png" 
-              alt="Logo" 
-              className="h-10 w-10 object-contain rounded-full"
-              onError={(e) => {
-                e.currentTarget.src = "https://api.iconify.design/lucide:store.svg?color=%234f46e5";
-                e.currentTarget.className = "h-6 w-6 m-2";
-              }}
-            />
+        <div className={cn("flex items-center gap-3 h-20 border-b border-slate-100", isCollapsed ? "justify-center" : "px-6")}>
+          <div className="bg-brand-500 p-1.5 rounded-lg shrink-0">
+            <Store className="h-6 w-6 text-white" />
           </div>
           {!isCollapsed && (
-            <motion.div
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-            >
-              <h1 className="text-xl font-black text-slate-900 tracking-tight leading-none uppercase">SariConnect</h1>
-              <p className="text-[10px] font-black text-brand-500 uppercase tracking-widest mt-1">Store Manager</p>
-            </motion.div>
+            <div className="min-w-0">
+              <h1 className="text-lg font-black text-brand-600 tracking-tight leading-none uppercase">SariConnect</h1>
+              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Seller Centre</p>
+            </div>
           )}
         </div>
 
-        <nav className="flex-1 space-y-2 overflow-y-auto no-scrollbar">
+        <div className="flex-1 py-6 space-y-1 overflow-y-auto no-scrollbar">
+          {!isCollapsed && (
+            <p className="px-8 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Main Menu</p>
+          )}
           {menuItems.map((item) => (
             <SidebarItem
               key={item.to}
@@ -136,35 +118,18 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
               collapsed={isCollapsed}
             />
           ))}
-        </nav>
+        </div>
 
-        <div className="mt-auto pt-8 border-t border-slate-100">
-          {!isCollapsed ? (
-            <div className="bg-slate-50 p-4 rounded-3xl mb-6 flex items-center gap-3">
-              <div className="h-10 w-10 rounded-2xl bg-brand-100 flex items-center justify-center text-brand-700 font-bold text-lg shadow-sm shrink-0">
-                {user?.name.charAt(0)}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-slate-900 truncate">{user?.name}</p>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{user?.role}</p>
-              </div>
-            </div>
-          ) : (
-            <div className="flex justify-center mb-6">
-              <div className="h-10 w-10 rounded-2xl bg-brand-100 flex items-center justify-center text-brand-700 font-bold text-lg shadow-sm">
-                {user?.name.charAt(0)}
-              </div>
-            </div>
-          )}
+        <div className="p-4 border-t border-slate-100">
           <button
             onClick={handleLogout}
             className={cn(
-              "flex items-center gap-3 w-full py-3.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 rounded-2xl transition-all duration-300 group",
+              "flex items-center gap-3 w-full py-3 text-slate-500 hover:bg-slate-50 hover:text-slate-900 rounded-xl transition-all duration-200 group",
               isCollapsed ? "justify-center" : "px-4"
             )}
           >
-            <LogOut className="h-5 w-5 group-hover:translate-x-1 transition-transform shrink-0" />
-            {!isCollapsed && <span className="font-bold text-sm">Logout</span>}
+            <LogOut className="h-5 w-5 shrink-0" />
+            {!isCollapsed && <span className="font-semibold text-sm">Logout</span>}
           </button>
         </div>
       </aside>
@@ -172,58 +137,57 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         {/* Top Navbar */}
-        <header className="h-20 bg-white border-b border-slate-100 flex items-center justify-between px-4 sm:px-8 sticky top-0 z-30 shrink-0">
+        <header className="h-20 bg-white border-b border-slate-200 flex items-center justify-between px-4 sm:px-8 sticky top-0 z-30 shrink-0">
           <div className="flex items-center gap-4">
-            <div className="hidden sm:block">
-              <h2 className="text-lg font-bold text-slate-900 tracking-tight">{currentPage}</h2>
-              <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">
-                <span>SariConnect</span>
-                <ChevronRight className="h-2.5 w-2.5" />
-                <span className="text-brand-500">{currentPage}</span>
-              </div>
+            <button 
+              onClick={toggleSidebar}
+              className="p-2 hover:bg-slate-50 rounded-lg transition-colors lg:flex hidden"
+            >
+              <Menu className="h-5 w-5 text-slate-500" />
+            </button>
+            <div className="sm:block hidden">
+              <h2 className="text-base font-bold text-slate-900">{currentPage}</h2>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-4">
-            <div className="hidden md:flex items-center bg-slate-50 border border-slate-100 rounded-2xl px-4 py-2 w-64 focus-within:ring-2 focus-within:ring-brand-500/20 focus-within:border-brand-500 transition-all">
+          <div className="flex items-center gap-4">
+            <div className="hidden md:flex items-center bg-slate-100 rounded-full px-4 py-2 w-64 focus-within:ring-2 focus-within:ring-brand-500/20 transition-all">
               <Search className="h-4 w-4 text-slate-400 mr-2" />
               <input 
                 type="text" 
-                placeholder="Search anything..." 
+                placeholder="Search..." 
                 className="bg-transparent border-none outline-none text-sm w-full placeholder:text-slate-400 font-medium"
               />
             </div>
 
-            <div className="h-8 w-[1px] bg-slate-100 mx-1 hidden sm:block"></div>
-
-            <Link 
-              to="/pos"
-              className="hidden sm:flex items-center gap-2 bg-brand-600 text-white px-5 py-2.5 rounded-2xl font-bold text-sm shadow-lg shadow-brand-200 hover:bg-brand-700 transition-all active:scale-95"
-            >
-              <Plus className="h-4 w-4" />
-              <span>New Sale</span>
-            </Link>
+            <div className="flex items-center gap-3 pl-4 border-l border-slate-100">
+              <div className="text-right hidden sm:block">
+                <p className="text-sm font-bold text-slate-900">{user?.name}</p>
+                <p className="text-[10px] text-brand-500 font-bold uppercase tracking-wider">{user?.role}</p>
+              </div>
+              <div className="h-10 w-10 rounded-full bg-brand-50 flex items-center justify-center text-brand-600 font-bold border border-brand-100">
+                {user?.name.charAt(0)}
+              </div>
+            </div>
           </div>
         </header>
 
         {/* Scrollable Content */}
-        <main className="flex-1 overflow-y-auto bg-[#F8FAFC]">
+        <main className="flex-1 overflow-y-auto bg-[#F6F6F6]">
           <div className="p-4 sm:p-8 max-w-7xl mx-auto pb-24 lg:pb-8">
             {children}
           </div>
         </main>
 
-        {/* Mobile Bottom Navigation */}
-        <div className="fixed bottom-6 left-4 right-4 lg:hidden z-40">
-          <nav className="bg-slate-900/90 backdrop-blur-xl border border-white/10 px-2 py-2 flex items-center justify-around rounded-[2rem] shadow-2xl shadow-slate-900/40">
+        {/* Mobile Bottom Navigation - Shopee Style */}
+        <div className="fixed bottom-0 left-0 right-0 lg:hidden z-40 bg-white border-t border-slate-200 pb-safe">
+          <nav className="flex items-center justify-around h-16">
             {[
               { to: '/', icon: LayoutDashboard, label: 'Home' },
               { to: '/pos', icon: ShoppingCart, label: 'POS' },
-              { to: '/products', icon: Package, label: 'Prod' },
-              { to: '/scanner', icon: Scan, label: 'Scan', primary: true },
-              { to: '/inventory', icon: BarChart3, label: 'Inv' },
+              { to: '/products', icon: Package, label: 'Products' },
               { to: '/sales', icon: History, label: 'Sales' },
-              { to: '/debts', icon: CreditCard, label: 'Utang' },
+              { to: '/debts', icon: CreditCard, label: 'Debts' },
             ].map((item) => {
               const isActive = location.pathname === item.to;
               const Icon = item.icon;
@@ -233,88 +197,85 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
                   key={item.to}
                   to={item.to} 
                   className={cn(
-                    "relative flex flex-col items-center justify-center transition-all duration-300 py-2 min-w-[40px]",
-                    item.primary ? "-top-6" : "",
-                    isActive ? "text-white" : "text-slate-400 hover:text-slate-200"
+                    "flex flex-col items-center justify-center flex-1 h-full transition-colors",
+                    isActive ? "text-brand-500" : "text-slate-400"
                   )}
                 >
-                  {isActive && !item.primary && (
-                    <motion.div 
-                      layoutId="nav-active-bg"
-                      className="absolute inset-0 bg-brand-600/20 rounded-2xl -z-10"
-                      transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
-                    />
-                  )}
-                  
-                  <div className={cn(
-                    "transition-transform duration-300",
-                    isActive ? "scale-110" : "scale-100",
-                    item.primary ? "bg-brand-600 p-4 rounded-full shadow-xl shadow-brand-500/40 border-4 border-slate-900 text-white" : ""
+                  <Icon className={cn("h-5 w-5 mb-1", isActive ? "stroke-[2.5px]" : "stroke-[2px]")} />
+                  <span className={cn(
+                    "text-[10px] font-medium",
+                    isActive ? "text-brand-500" : "text-slate-500"
                   )}>
-                    <Icon className={cn(item.primary ? "h-6 w-6" : "h-5 w-5")} />
-                  </div>
-                  
-                  {!item.primary && (
-                    <span className={cn(
-                      "text-[9px] font-black uppercase tracking-tighter mt-1 transition-all",
-                      isActive ? "opacity-100 translate-y-0" : "opacity-60"
-                    )}>
-                      {item.label}
-                    </span>
-                  )}
+                    {item.label}
+                  </span>
                 </Link>
               );
             })}
-
-            {/* Settings/Logout Button */}
-            <div className="relative">
-              <button 
-                onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-                className={cn(
-                  "flex flex-col items-center justify-center py-2 min-w-[44px] transition-all duration-300",
-                  isSettingsOpen ? "text-white" : "text-slate-400"
-                )}
-              >
-                {isSettingsOpen && (
-                  <div className="absolute inset-0 bg-brand-600/20 rounded-2xl -z-10" />
-                )}
-                <Settings className={cn("h-5 w-5 transition-transform", isSettingsOpen ? "rotate-45 scale-110" : "")} />
-                <span className="text-[9px] font-black uppercase tracking-tighter mt-1 opacity-60">Set</span>
-              </button>
-              
-              <AnimatePresence>
-                {isSettingsOpen && (
-                  <>
-                    <motion.div 
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      onClick={() => setIsSettingsOpen(false)}
-                      className="fixed inset-0 z-[-1]"
-                    />
-                    <motion.div
-                      initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                      className="absolute bottom-full right-0 mb-6 w-48 bg-slate-900 border border-white/10 rounded-[2rem] shadow-2xl p-2 overflow-hidden"
-                    >
-                      <div className="px-4 py-3 border-b border-white/5 mb-1">
-                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Account</p>
-                        <p className="text-xs font-bold text-white truncate">{user?.name}</p>
-                      </div>
-                      <button
-                        onClick={handleLogout}
-                        className="flex items-center gap-3 w-full px-4 py-3 text-rose-400 hover:bg-rose-500/10 rounded-2xl transition-all"
-                      >
-                        <LogOut className="h-4 w-4" />
-                        <span className="font-black text-[10px] uppercase tracking-widest">Logout System</span>
-                      </button>
-                    </motion.div>
-                  </>
-                )}
-              </AnimatePresence>
-            </div>
+            
+            <button 
+              onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+              className={cn(
+                "flex flex-col items-center justify-center flex-1 h-full transition-colors",
+                isSettingsOpen ? "text-brand-500" : "text-slate-400"
+              )}
+            >
+              <Settings className={cn("h-5 w-5 mb-1", isSettingsOpen ? "stroke-[2.5px]" : "stroke-[2px]")} />
+              <span className={cn(
+                "text-[10px] font-medium",
+                isSettingsOpen ? "text-brand-500" : "text-slate-500"
+              )}>
+                More
+              </span>
+            </button>
           </nav>
+
+          <AnimatePresence>
+            {isSettingsOpen && (
+              <>
+                <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => setIsSettingsOpen(false)}
+                  className="fixed inset-0 bg-black/20 z-[-1]"
+                />
+                <motion.div
+                  initial={{ opacity: 0, y: 100 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 100 }}
+                  className="absolute bottom-full left-0 right-0 bg-white rounded-t-3xl shadow-2xl p-6 border-t border-slate-100"
+                >
+                  <div className="flex items-center gap-4 mb-6 pb-6 border-b border-slate-100">
+                    <div className="h-14 w-14 rounded-full bg-brand-50 flex items-center justify-center text-brand-600 font-bold text-xl border border-brand-100">
+                      {user?.name.charAt(0)}
+                    </div>
+                    <div>
+                      <p className="text-lg font-bold text-slate-900">{user?.name}</p>
+                      <p className="text-sm text-slate-500 font-medium">{user?.email}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <Link 
+                      to="/scanner" 
+                      onClick={() => setIsSettingsOpen(false)}
+                      className="flex flex-col items-center gap-2 p-4 bg-slate-50 rounded-2xl hover:bg-brand-50 transition-colors group"
+                    >
+                      <Scan className="h-6 w-6 text-slate-500 group-hover:text-brand-500" />
+                      <span className="text-xs font-bold text-slate-700">Scanner</span>
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      className="flex flex-col items-center gap-2 p-4 bg-rose-50 rounded-2xl hover:bg-rose-100 transition-colors group"
+                    >
+                      <LogOut className="h-6 w-6 text-rose-500" />
+                      <span className="text-xs font-bold text-rose-700">Logout</span>
+                    </button>
+                  </div>
+                </motion.div>
+              </>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </div>

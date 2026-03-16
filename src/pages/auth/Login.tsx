@@ -22,6 +22,27 @@ export const Login = () => {
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [showPassword, setShowPassword] = React.useState(false);
+  const [loadingMessageIndex, setLoadingMessageIndex] = React.useState(0);
+
+  const loadingMessages = [
+    "Authenticating...",
+    "Verifying Credentials...",
+    "Connecting to Secure Server...",
+    "Preparing Your Dashboard...",
+    "Finalizing Setup..."
+  ];
+
+  React.useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isLoading) {
+      interval = setInterval(() => {
+        setLoadingMessageIndex((prev) => (prev + 1) % loadingMessages.length);
+      }, 1500);
+    } else {
+      setLoadingMessageIndex(0);
+    }
+    return () => clearInterval(interval);
+  }, [isLoading]);
 
   const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
@@ -33,7 +54,6 @@ export const Login = () => {
     try {
       const res = await api.post('/auth/login', data);
       
-      // Admin only check
       if (res.data.user.role !== 'admin') {
         setError('Access denied. Only administrators can access the portal.');
         setIsLoading(false);
@@ -50,7 +70,7 @@ export const Login = () => {
   };
 
   return (
-    <div className="min-h-screen relative flex items-center justify-center p-4 overflow-hidden">
+    <div className="min-h-screen flex flex-col lg:flex-row bg-white overflow-hidden">
       {/* Loading Overlay */}
       <AnimatePresence>
         {isLoading && (
@@ -58,146 +78,229 @@ export const Login = () => {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-slate-900/60 backdrop-blur-md"
+            className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-white/80 backdrop-blur-xl"
           >
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="bg-white/10 p-8 rounded-[2.5rem] border border-white/20 shadow-2xl flex flex-col items-center gap-4"
-            >
-              <div className="relative">
-                <Loader2 className="h-12 w-12 text-indigo-400 animate-spin" />
-                <div className="absolute inset-0 blur-lg bg-indigo-500/30 animate-pulse" />
+            <div className="relative flex flex-col items-center max-w-xs w-full px-6">
+              {/* Animated Logo Container */}
+              <motion.div
+                animate={{ 
+                  scale: [1, 1.05, 1],
+                  rotate: [0, 5, -5, 0]
+                }}
+                transition={{ 
+                  duration: 4, 
+                  repeat: Infinity, 
+                  ease: "easeInOut" 
+                }}
+                className="w-24 h-24 bg-white rounded-[2rem] flex items-center justify-center shadow-[0_20px_50px_rgba(238,77,45,0.15)] mb-10 border border-slate-50 relative z-10"
+              >
+                <img 
+                  src="https://raw.githubusercontent.com/johnlawrencemartinez/sariconnect-assets/main/logo.png" 
+                  alt="SariConnect Logo" 
+                  className="h-14 w-14 object-contain"
+                />
+                
+                {/* Orbital Ring */}
+                <motion.div 
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                  className="absolute inset-[-8px] border-2 border-dashed border-brand-500/30 rounded-[2.5rem]"
+                />
+              </motion.div>
+
+              {/* Progress Bar */}
+              <div className="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden mb-6 relative">
+                <motion.div 
+                  initial={{ width: "0%" }}
+                  animate={{ width: "100%" }}
+                  transition={{ duration: 8, ease: "linear" }}
+                  className="absolute top-0 left-0 h-full bg-brand-500 shadow-[0_0_10px_rgba(238,77,45,0.5)]"
+                />
               </div>
-              <div className="text-center">
-                <h3 className="text-xl font-black text-white uppercase tracking-widest">Authenticating</h3>
-                <p className="text-xs text-indigo-200/60 font-medium uppercase tracking-[0.2em] mt-1">Verifying Admin Credentials</p>
+
+              {/* Sequential Messages */}
+              <div className="text-center h-12 flex items-center justify-center">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={loadingMessageIndex}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.3 }}
+                    className="flex flex-col items-center gap-1"
+                  >
+                    <span className="text-sm font-black text-slate-900 uppercase tracking-[0.2em]">
+                      {loadingMessages[loadingMessageIndex]}
+                    </span>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                      Secure Encryption Active
+                    </span>
+                  </motion.div>
+                </AnimatePresence>
               </div>
-            </motion.div>
+            </div>
+
+            {/* Background Decorative Elements */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-brand-500/5 rounded-full blur-[120px] pointer-events-none" />
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Background Image with Overlay */}
-      <div 
-        className="absolute inset-0 z-0"
-        style={{
-          backgroundImage: 'url("https://images.unsplash.com/photo-1534723452862-4c874018d66d?auto=format&fit=crop&q=80&w=2000")',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-        }}
-      >
-        <div className="absolute inset-0 bg-slate-900/70 backdrop-blur-[2px]" />
+      {/* Left Side - Welcome (Hidden on mobile, shown on desktop) */}
+      <div className="hidden lg:flex lg:w-1/2 bg-[#fdfdfd] relative items-center justify-center p-12 overflow-hidden border-r border-slate-100">
+        {/* Subtle Background Elements */}
+        <div className="absolute top-0 left-0 w-full h-full opacity-[0.02] pointer-events-none">
+          <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="dots" width="20" height="20" patternUnits="userSpaceOnUse">
+                <circle cx="2" cy="2" r="1" fill="currentColor" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#dots)" />
+          </svg>
+        </div>
+        
+        <div className="relative z-10 text-center max-w-md">
+          <div className="flex flex-col items-center mb-12">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }}
+              className="w-32 h-32 bg-white rounded-[2.5rem] flex items-center justify-center shadow-[0_20px_50px_rgba(238,77,45,0.15)] mb-6 border border-slate-50"
+            >
+              <img 
+                src="https://raw.githubusercontent.com/johnlawrencemartinez/sariconnect-assets/main/logo.png" 
+                alt="SariConnect Logo" 
+                className="h-20 w-20 object-contain"
+                onError={(e) => {
+                  e.currentTarget.src = "https://api.iconify.design/lucide:rocket.svg?color=%23ee4d2d";
+                }}
+              />
+            </motion.div>
+            <h1 className="text-5xl font-black tracking-tight text-slate-900">SariConnect</h1>
+            <div className="h-1 w-12 bg-brand-500 rounded-full mt-4" />
+          </div>
+          <p className="text-slate-500 text-lg font-medium leading-relaxed">
+            The professional standard for modern store management.
+          </p>
+          
+          <div className="mt-16 grid grid-cols-2 gap-4 text-left">
+            {[
+              { label: 'Real-time Sales', icon: ShieldCheck },
+              { label: 'Inventory Control', icon: Store },
+            ].map((item, i) => (
+              <div key={i} className="p-4 rounded-2xl bg-white border border-slate-100 shadow-sm flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-brand-50 flex items-center justify-center">
+                  <item.icon className="h-4 w-4 text-brand-600" />
+                </div>
+                <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">{item.label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
-      {/* Login Card */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md z-10"
-      >
-        <div className="bg-white/10 backdrop-blur-xl rounded-[2.5rem] border border-white/20 shadow-2xl overflow-hidden">
-          {/* Header Section */}
-          <div className="bg-gradient-to-b from-indigo-600/80 to-indigo-900/80 p-8 text-center border-b border-white/10">
-            <div className="inline-flex items-center justify-center p-1 bg-white rounded-full shadow-2xl mb-6">
-              <div className="bg-indigo-600 p-1 rounded-full overflow-hidden">
-                <img 
-                  src="https://raw.githubusercontent.com/johnlawrencemartinez/sariconnect-assets/main/logo.png" 
-                  alt="SariConnect Logo" 
-                  className="h-16 w-16 object-contain"
-                  onError={(e) => {
-                    e.currentTarget.src = "https://api.iconify.design/lucide:store.svg?color=%23ffffff";
-                    e.currentTarget.className = "h-10 w-10 m-3";
-                  }}
-                />
-              </div>
-            </div>
-            <h2 className="text-3xl font-black text-white tracking-tight uppercase">Admin Portal</h2>
-            <div className="flex items-center justify-center gap-2 mt-2">
-              <Lock className="h-4 w-4 text-amber-400" />
-              <p className="text-sm font-bold text-white/90 uppercase tracking-widest">Authorized Access Only</p>
-            </div>
-            <p className="text-[10px] font-medium text-white/60 uppercase tracking-[0.2em] mt-2">SariConnect Management System</p>
+      {/* Right Side - Form */}
+      <div className="flex-1 flex items-center justify-center p-8 lg:p-16 bg-white relative">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-md relative z-10"
+        >
+          <div className="mb-12">
+            <h2 className="text-4xl font-black text-slate-900 tracking-tight">Sign In</h2>
+            <p className="text-slate-500 mt-2 font-medium">Access your professional dashboard</p>
           </div>
 
-          {/* Form Section */}
-          <div className="p-8 space-y-6">
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              {error && (
-                <motion.div 
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  className="p-4 bg-rose-500/20 border border-rose-500/50 text-rose-100 text-sm rounded-2xl font-medium backdrop-blur-md"
-                >
-                  {error}
-                </motion.div>
-              )}
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+            {error && (
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="p-4 bg-rose-50 border border-rose-100 text-rose-600 text-sm rounded-2xl font-medium"
+              >
+                {error}
+              </motion.div>
+            )}
 
-              <div className="space-y-4">
-                <div className="relative">
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-300">
-                    <User className="h-5 w-5" />
-                  </div>
+            <div className="space-y-6">
+              <div className="relative group">
+                <label className="block text-[11px] font-black text-slate-400 uppercase tracking-[0.15em] mb-2 group-focus-within:text-brand-600 transition-colors">
+                  Email Address
+                </label>
+                <div className="relative flex items-center bg-slate-50 rounded-2xl border-2 border-transparent group-focus-within:border-brand-500/20 group-focus-within:bg-white transition-all px-4 py-3.5">
+                  <User className="h-5 w-5 text-slate-400 mr-3 group-focus-within:text-brand-600 transition-colors" />
                   <input
                     {...register('email')}
                     type="email"
-                    placeholder="Admin Username / Email"
-                    className="w-full h-14 pl-12 pr-4 bg-white/5 border border-white/10 rounded-2xl text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white/10 transition-all font-medium"
+                    placeholder="admin@store.com"
+                    className="w-full bg-transparent outline-none text-slate-900 font-bold placeholder:text-slate-300 text-sm"
                   />
-                  {errors.email && (
-                    <p className="mt-1 ml-2 text-xs text-rose-400 font-bold uppercase tracking-wider">{errors.email.message}</p>
-                  )}
                 </div>
+                {errors.email && (
+                  <p className="mt-2 text-[10px] text-rose-500 font-bold uppercase tracking-wider flex items-center gap-1">
+                    <span className="w-1 h-1 rounded-full bg-rose-500" />
+                    {errors.email.message}
+                  </p>
+                )}
+              </div>
 
-                <div className="relative">
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-300">
-                    <Key className="h-5 w-5" />
-                  </div>
+              <div className="relative group">
+                <label className="block text-[11px] font-black text-slate-400 uppercase tracking-[0.15em] mb-2 group-focus-within:text-brand-600 transition-colors">
+                  Password
+                </label>
+                <div className="relative flex items-center bg-slate-50 rounded-2xl border-2 border-transparent group-focus-within:border-brand-500/20 group-focus-within:bg-white transition-all px-4 py-3.5">
+                  <Key className="h-5 w-5 text-slate-400 mr-3 group-focus-within:text-brand-600 transition-colors" />
                   <input
                     {...register('password')}
                     type={showPassword ? 'text' : 'password'}
-                    placeholder="Password"
-                    className="w-full h-14 pl-12 pr-12 bg-white/5 border border-white/10 rounded-2xl text-white placeholder:text-white/30 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white/10 transition-all font-medium"
+                    placeholder="••••••••"
+                    className="w-full bg-transparent outline-none text-slate-900 font-bold placeholder:text-slate-300 text-sm"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-white/30 hover:text-white transition-colors"
+                    className="text-slate-300 hover:text-brand-600 transition-colors p-1"
                   >
-                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
-                  {errors.password && (
-                    <p className="mt-1 ml-2 text-xs text-rose-400 font-bold uppercase tracking-wider">{errors.password.message}</p>
-                  )}
                 </div>
+                {errors.password && (
+                  <p className="mt-2 text-[10px] text-rose-500 font-bold uppercase tracking-wider flex items-center gap-1">
+                    <span className="w-1 h-1 rounded-full bg-rose-500" />
+                    {errors.password.message}
+                  </p>
+                )}
               </div>
+            </div>
 
+            <div className="flex flex-col gap-6">
               <Button 
                 type="submit" 
-                className="w-full h-14 rounded-2xl bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-black uppercase tracking-widest shadow-xl shadow-indigo-900/20 border-none" 
+                className="w-full h-14 rounded-2xl bg-brand-600 hover:bg-brand-700 text-white font-black uppercase tracking-[0.2em] shadow-[0_10px_30px_rgba(238,77,45,0.2)] border-none transition-all active:scale-[0.98] flex items-center justify-center gap-2" 
                 isLoading={isLoading}
               >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    Verifying...
-                  </>
-                ) : (
-                  <>
-                    <ArrowRight className="mr-2 h-5 w-5" />
-                    Sign In to Dashboard
-                  </>
-                )}
+                Sign In to Dashboard
+                <ArrowRight className="h-5 w-5" />
               </Button>
-            </form>
+              
+              <button 
+                type="button"
+                className="text-center text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] hover:text-brand-600 transition-colors"
+              >
+                Forgot your password?
+              </button>
+            </div>
+          </form>
 
-            <div className="flex items-center justify-center gap-2 pt-2">
-              <ShieldCheck className="h-4 w-4 text-emerald-400" />
-              <p className="text-[10px] font-bold text-white/40 uppercase tracking-widest">Secure Connection • 256-bit Encrypted</p>
+          <div className="mt-20 pt-8 border-t border-slate-100 flex items-center justify-center">
+            <div className="flex items-center gap-3 px-4 py-2 rounded-xl bg-slate-50 border border-slate-100">
+              <ShieldCheck className="h-4 w-4 text-emerald-500" />
+              <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.1em]">Secure Administrator Access</p>
             </div>
           </div>
-        </div>
-      </motion.div>
+        </motion.div>
+      </div>
     </div>
   );
 };

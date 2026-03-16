@@ -3,7 +3,6 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useStore } from './store/useStore';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 import { Login } from './pages/auth/Login';
-import { Register } from './pages/auth/Register';
 import { Dashboard } from './pages/dashboard/Dashboard';
 import { Products } from './pages/dashboard/Products';
 import { Inventory } from './pages/dashboard/Inventory';
@@ -27,7 +26,6 @@ export const AppRouter = () => {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
       
       <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/pos" element={<ProtectedRoute><POS /></ProtectedRoute>} />

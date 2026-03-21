@@ -46,7 +46,7 @@ h1, h2, h3, h4, .font-display {
 }
 
 .bento-card {
-  @apply bg-white rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300;
+  @apply bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300;
 }
 
 /* Barcode Scanner Overrides */

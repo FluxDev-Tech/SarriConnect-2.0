@@ -123,9 +123,9 @@ export const Dashboard = () => {
 
   if (!stats) return <div className="animate-pulse space-y-8">
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      {[1,2,3,4].map(i => <div key={i} className="h-32 bg-slate-100 rounded-[2rem]" />)}
+      {[1,2,3,4].map(i => <div key={i} className="h-32 bg-slate-100 rounded-2xl" />)}
     </div>
-    <div className="h-96 bg-slate-100 rounded-[2rem]" />
+    <div className="h-96 bg-slate-100 rounded-2xl" />
   </div>;
 
   return (

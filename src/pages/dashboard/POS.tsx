@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { 
   Search, 
   ShoppingCart, 
-  Plus, 
+  Plus,
   Minus, 
   Trash2, 
   CreditCard, 
@@ -11,17 +11,12 @@ import {
   CheckCircle2,
   Package,
   Printer,
-  Download,
   X,
   Banknote,
   Clock,
   ArrowRight,
   LayoutDashboard,
-  Menu,
-  Camera,
-  Eye,
-  LayoutGrid,
-  List
+  Menu
 } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import { formatCurrency, cn } from '../../utils/helpers';
@@ -29,7 +24,6 @@ import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
 import { Modal } from '../../components/ui/Modal';
 import { Receipt } from '../../components/dashboard/Receipt';
-import { BarcodeScanner } from '../../components/dashboard/BarcodeScanner';
 import { Product } from '../../types';
 import { motion, AnimatePresence } from 'motion/react';
 import confetti from 'canvas-confetti';
@@ -55,8 +49,6 @@ export const POS = () => {
   const [showReceipt, setShowReceipt] = React.useState(false);
   const [lastOrder, setLastOrder] = React.useState<any>(null);
   const [activeTab, setActiveTab] = React.useState<'products' | 'cart'>('products');
-  const [viewMode, setViewMode] = React.useState<'grid' | 'list'>('grid');
-  const [isScannerOpen, setIsScannerOpen] = React.useState(false);
   const searchInputRef = React.useRef<HTMLInputElement>(null);
 
   const playSound = (type: 'add' | 'success' | 'click') => {
@@ -73,32 +65,7 @@ export const POS = () => {
   React.useEffect(() => {
     fetchProducts();
     fetchReceiptSettings();
-
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'F4' || (e.key === '/' && document.activeElement?.tagName !== 'INPUT')) {
-        e.preventDefault();
-        searchInputRef.current?.focus();
-      }
-      if (e.key === 'F2') {
-        e.preventDefault();
-        handleCheckout();
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [fetchProducts, fetchReceiptSettings]);
-
-  // Barcode auto-add logic
-  React.useEffect(() => {
-    if (searchQuery.length >= 3) {
-      const exactMatch = products.find(p => p.barcode === searchQuery);
-      if (exactMatch && exactMatch.stock > 0) {
-        addToCart(exactMatch);
-        setSearchQuery('');
-      }
-    }
-  }, [searchQuery, products]);
+  }, []);
 
   const categories = ['All', ...new Set((products || []).map(p => p.category))];
 
@@ -239,23 +206,15 @@ export const POS = () => {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="hidden md:block">
               <h2 className="text-3xl font-black text-slate-900">POS Terminal</h2>
-              <p className="text-slate-500 font-medium text-sm">Build an order by selecting items</p>
+              <p className="text-slate-500 font-medium text-sm">Search and add items to order</p>
             </div>
-            <div className="flex items-center gap-2 w-full md:w-auto">
-              <Button
-                variant="secondary"
-                onClick={() => setIsScannerOpen(true)}
-                className="h-12 px-4 rounded-2xl bg-white border-slate-100 shadow-sm hover:bg-brand-50 hover:text-brand-600 hover:border-brand-200 transition-all shrink-0"
-                title="Scan Barcode"
-              >
-                <Camera className="h-5 w-5" />
-              </Button>
-              <div className="relative flex-1 md:w-80">
+            <div className="flex items-center gap-2 w-full md:w-auto flex-1">
+              <div className="relative flex-1">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                 <input
                   ref={searchInputRef}
                   type="text"
-                  placeholder="Search or scan..."
+                  placeholder="Search products by name or barcode..."
                   className="w-full pl-10 pr-10 py-3 rounded-2xl border border-slate-100 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all font-medium text-sm h-12"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -269,56 +228,13 @@ export const POS = () => {
                   </button>
                 )}
               </div>
-              <div className="flex bg-white p-1 rounded-xl border border-slate-100 shadow-sm">
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={cn(
-                    "p-2 rounded-lg transition-all",
-                    viewMode === 'grid' ? "bg-brand-50 text-brand-600" : "text-slate-400 hover:text-slate-600"
-                  )}
-                >
-                  <LayoutDashboard className="h-4 w-4" />
-                </button>
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={cn(
-                    "p-2 rounded-lg transition-all",
-                    viewMode === 'list' ? "bg-brand-50 text-brand-600" : "text-slate-400 hover:text-slate-600"
-                  )}
-                >
-                  <Menu className="h-4 w-4" />
-                </button>
-              </div>
             </div>
-          </div>
-
-          {/* Categories Bar */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-2 no-scrollbar -mx-2 px-2">
-            {categories.map((category) => (
-              <button
-                key={category}
-                onClick={() => setSelectedCategory(category)}
-                className={cn(
-                  "px-5 py-2.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all border",
-                  selectedCategory === category
-                    ? "bg-brand-600 text-white border-brand-600 shadow-md shadow-brand-100"
-                    : "bg-white text-slate-500 border-slate-100 hover:border-brand-200 hover:text-brand-600"
-                )}
-              >
-                {category}
-              </button>
-            ))}
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto pr-1 -mr-1 scroll-smooth">
           {filteredProducts.length > 0 ? (
-            <div className={cn(
-              "pb-32 lg:pb-0",
-              viewMode === 'grid' 
-                ? "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3 lg:gap-4" 
-                : "flex flex-col gap-2"
-            )}>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-3 lg:gap-4 pb-32 lg:pb-0">
               <AnimatePresence mode="popLayout">
                 {filteredProducts.map((product) => (
                   <motion.button
@@ -331,19 +247,13 @@ export const POS = () => {
                     whileTap={{ scale: 0.95 }}
                     onClick={() => addToCart(product)}
                     disabled={product.stock <= 0}
-                    className={cn(
-                      "group relative bg-white rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl hover:border-brand-200 transition-all text-left disabled:opacity-50 disabled:grayscale flex",
-                      viewMode === 'grid' ? "flex-col p-4 h-full" : "flex-row p-3 items-center gap-4"
-                    )}
+                    className="group relative bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-xl hover:border-brand-200 transition-all text-left disabled:opacity-50 disabled:grayscale flex flex-col p-4 h-full"
                   >
-                    <div className={cn(
-                      "bg-slate-50 rounded-2xl flex items-center justify-center text-slate-300 group-hover:bg-brand-50 group-hover:text-brand-200 transition-colors relative overflow-hidden shrink-0",
-                      viewMode === 'grid' ? "aspect-square mb-3" : "h-12 w-12"
-                    )}>
+                    <div className="bg-slate-50 rounded-2xl flex items-center justify-center text-slate-300 group-hover:bg-brand-50 group-hover:text-brand-200 transition-colors relative overflow-hidden shrink-0 aspect-square mb-3">
                       {product.imageUrl ? (
                         <img src={product.imageUrl} alt={product.name} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                       ) : (
-                        <Package className={cn(viewMode === 'grid' ? "h-10 w-10" : "h-6 w-6")} />
+                        <Package className="h-10 w-10" />
                       )}
                       {product.stock <= 5 && product.stock > 0 && (
                         <div className="absolute top-1 right-1 bg-amber-500 text-white text-[7px] font-black px-1.5 py-0.5 rounded-md shadow-lg">
@@ -360,39 +270,24 @@ export const POS = () => {
                     <div className="flex-1 min-w-0">
                       <h4 className="font-bold text-slate-900 text-sm line-clamp-1 mb-0.5">{product.name}</h4>
                       <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{product.category}</p>
-                      {viewMode === 'list' && (
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="text-brand-600 font-black text-sm">{formatCurrency(product.price)}</span>
-                          <span className="text-[10px] text-slate-400 font-medium">Stock: {product.stock}</span>
-                        </div>
-                      )}
                     </div>
 
-                    {viewMode === 'grid' ? (
-                      <div className="mt-auto flex items-center justify-between">
-                        <span className="text-brand-600 font-black text-base">{formatCurrency(product.price)}</span>
-                        <div className={cn(
-                          "h-7 w-7 rounded-lg flex items-center justify-center transition-colors",
-                          product.stock <= 0 ? "bg-slate-100 text-slate-400" : "bg-brand-50 text-brand-600 group-hover:bg-brand-600 group-hover:text-white"
-                        )}>
-                          <Plus className="h-4 w-4" />
-                        </div>
-                      </div>
-                    ) : (
+                    <div className="mt-auto flex items-center justify-between">
+                      <span className="text-brand-600 font-black text-base">{formatCurrency(product.price)}</span>
                       <div className={cn(
-                        "h-8 w-8 rounded-xl flex items-center justify-center transition-colors",
+                        "h-7 w-7 rounded-lg flex items-center justify-center transition-colors",
                         product.stock <= 0 ? "bg-slate-100 text-slate-400" : "bg-brand-50 text-brand-600 group-hover:bg-brand-600 group-hover:text-white"
                       )}>
                         <Plus className="h-4 w-4" />
                       </div>
-                    )}
+                    </div>
                   </motion.button>
                 ))}
               </AnimatePresence>
             </div>
           ) : (
             <div className="h-full flex flex-col items-center justify-center text-center py-20">
-              <div className="w-20 h-20 bg-slate-50 rounded-[2.5rem] flex items-center justify-center mb-4">
+              <div className="w-20 h-20 bg-slate-50 rounded-2xl flex items-center justify-center mb-4">
                 <Search className="h-8 w-8 text-slate-200" />
               </div>
               <h3 className="text-slate-900 font-bold text-lg">No Products Found</h3>
@@ -663,7 +558,7 @@ export const POS = () => {
             exit={{ opacity: 0, y: 100, scale: 0.8 }}
             className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 w-[90%] max-w-md"
           >
-            <div className="bg-emerald-600 text-white p-1 rounded-[2.5rem] shadow-[0_20px_50px_rgba(16,185,129,0.3)] border border-white/20 backdrop-blur-xl">
+            <div className="bg-emerald-600 text-white p-1 rounded-3xl shadow-[0_20px_50px_rgba(16,185,129,0.3)] border border-white/20 backdrop-blur-xl">
               <div className="flex items-center justify-between pl-6 pr-2 py-2">
                 <div className="flex items-center gap-4">
                   <motion.div 
@@ -723,7 +618,7 @@ export const POS = () => {
         }
       >
         <div className="space-y-6">
-          <div className="bg-slate-50 p-4 sm:p-6 rounded-[2rem] overflow-hidden border border-slate-100">
+          <div className="bg-slate-50 p-4 sm:p-6 rounded-2xl overflow-hidden border border-slate-100">
             {lastOrder && receiptSettings && (
               <Receipt 
                 settings={receiptSettings}
@@ -760,20 +655,6 @@ export const POS = () => {
           </div>
         </div>
       </Modal>
-
-      {/* Barcode Scanner */}
-      {isScannerOpen && (
-        <BarcodeScanner 
-          products={products}
-          onScan={(code) => {
-            const product = products.find(p => p.barcode === code);
-            if (product && product.stock > 0) {
-              addToCart(product);
-            }
-          }}
-          onClose={() => setIsScannerOpen(false)}
-        />
-      )}
     </div>
   );
 };

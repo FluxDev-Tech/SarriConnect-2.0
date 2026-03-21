@@ -481,7 +481,7 @@ export const SalesHistory = () => {
         }
       >
         <div className="space-y-6">
-          <div className="bg-slate-50 p-2 sm:p-6 rounded-[2rem] overflow-hidden border border-slate-100 relative">
+          <div className="bg-slate-50 p-2 sm:p-6 rounded-2xl overflow-hidden border border-slate-100 relative">
             {isDetailsLoading && !selectedSale?.itemsList && (
               <div className="absolute inset-0 z-10 bg-white/60 backdrop-blur-[2px] flex flex-col items-center justify-center gap-4">
                 <div className="w-10 h-10 border-4 border-brand-600 border-t-transparent rounded-full animate-spin" />

@@ -212,7 +212,7 @@ export const Inventory = () => {
         title="Confirm Deletion"
       >
         <div className="space-y-8">
-          <div className="flex items-center gap-6 p-6 bg-rose-50 rounded-[2rem] text-rose-700 border border-rose-100">
+          <div className="flex items-center gap-6 p-6 bg-rose-50 rounded-2xl text-rose-700 border border-rose-100">
             <div className="bg-rose-100 p-3 rounded-2xl">
               <AlertTriangle className="h-8 w-8" />
             </div>

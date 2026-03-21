@@ -366,7 +366,7 @@ export const Products = () => {
 
       {filteredProducts.length === 0 && (
         <div className="p-20 text-center bento-card border-dashed">
-          <div className="inline-flex items-center justify-center p-6 bg-slate-50 rounded-[2.5rem] mb-6">
+          <div className="inline-flex items-center justify-center p-6 bg-slate-50 rounded-3xl mb-6">
             <Search className="h-10 w-10 text-slate-300" />
           </div>
           <h3 className="text-xl font-bold text-slate-900">No products found</h3>
@@ -386,7 +386,7 @@ export const Products = () => {
             <label className="text-xs font-black text-slate-400 uppercase tracking-widest">Product Image</label>
             <div className="flex flex-col gap-4">
               {imageUrl ? (
-                <div className="relative w-full aspect-video rounded-[2rem] overflow-hidden border border-slate-100 bg-slate-50 group">
+                <div className="relative w-full aspect-video rounded-2xl overflow-hidden border border-slate-100 bg-slate-50 group">
                   <img 
                     src={imageUrl} 
                     alt="Preview" 
@@ -402,7 +402,7 @@ export const Products = () => {
                   </button>
                 </div>
               ) : (
-                <label className="flex flex-col items-center justify-center w-full aspect-video rounded-[2rem] border-2 border-dashed border-slate-200 bg-slate-50 hover:bg-brand-50 hover:border-brand-300 transition-all cursor-pointer group">
+                <label className="flex flex-col items-center justify-center w-full aspect-video rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50 hover:bg-brand-50 hover:border-brand-300 transition-all cursor-pointer group">
                   <div className="flex flex-col items-center justify-center pt-5 pb-6">
                     <div className="bg-white p-4 rounded-2xl shadow-sm mb-4 group-hover:scale-110 transition-transform">
                       <Upload className="w-8 h-8 text-slate-400 group-hover:text-brand-600" />
@@ -455,7 +455,7 @@ export const Products = () => {
         title="Confirm Deletion"
       >
         <div className="space-y-8">
-          <div className="flex items-center gap-6 p-6 bg-rose-50 rounded-[2rem] text-rose-700 border border-rose-100">
+          <div className="flex items-center gap-6 p-6 bg-rose-50 rounded-2xl text-rose-700 border border-rose-100">
             <div className="bg-rose-100 p-3 rounded-2xl">
               <AlertTriangle className="h-8 w-8" />
             </div>

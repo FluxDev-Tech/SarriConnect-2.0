@@ -1,18 +1,19 @@
 import React from 'react';
 import { Html5Qrcode, Html5QrcodeSupportedFormats } from 'html5-qrcode';
-import { X, Zap, Info, CheckCircle2, AlertCircle, RefreshCw, Camera } from 'lucide-react';
+import { X, Zap, Info, CheckCircle2, AlertCircle, RefreshCw, Camera, Scan } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Product } from '../../types';
 import { formatCurrency } from '../../utils/helpers';
 
 interface BarcodeScannerProps {
   onScan: (decodedText: string) => void;
-  onClose: () => void;
+  onClose?: () => void;
   products?: Product[];
   onQuickSale?: (product: Product) => Promise<void>;
+  isModal?: boolean;
 }
 
-export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, onClose, products = [], onQuickSale }) => {
+export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, onClose, products = [], onQuickSale, isModal = true }) => {
   const [lastScanned, setLastScanned] = React.useState<Product | null>(null);
   const [isProcessing, setIsProcessing] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -98,12 +99,18 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, onClose,
             setLastScanned(product);
             setError(null);
             
+            // Clear success message after 3 seconds
+            setTimeout(() => {
+              setLastScanned(null);
+            }, 3000);
+            
             if (onQuickSale) {
               setIsProcessing(true);
               try {
                 await onQuickSale(product);
               } catch (err) {
                 setError('Failed to record sale');
+                setTimeout(() => setError(null), 3000);
               } finally {
                 setIsProcessing(false);
               }
@@ -111,6 +118,7 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, onClose,
           } else {
             setError(`Product with barcode ${decodedText} not found`);
             setLastScanned(null);
+            setTimeout(() => setError(null), 3000);
           }
         },
         () => {} // Ignore errors
@@ -168,42 +176,49 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, onClose,
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-      <div className="bg-white rounded-[3rem] shadow-2xl w-full max-w-lg overflow-hidden relative border border-white/20">
+    <div className={cn(
+      isModal ? "fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md p-4" : "w-full"
+    )}>
+      <div className={cn(
+        "bg-white overflow-hidden relative border border-slate-100",
+        isModal ? "rounded-3xl shadow-2xl w-full max-w-lg border-white/20" : "rounded-2xl w-full"
+      )}>
         {/* Header */}
-        <div className="p-8 border-b border-slate-50 flex items-center justify-between bg-slate-50/50">
-          <div className="flex items-center gap-4">
-            <div className="bg-brand-600 p-3 rounded-2xl shadow-lg shadow-brand-200">
-              <Zap className="h-6 w-6 text-white" />
+        <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-white">
+          <div className="flex items-center gap-3">
+            <div className="bg-brand-50 p-2 rounded-lg">
+              <Scan className="h-5 w-5 text-brand-600" />
             </div>
             <div>
-              <h3 className="text-2xl font-black text-slate-900 leading-none">Smart Scanner</h3>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1.5">
-                {facingMode === 'environment' ? 'Back Camera' : 'Front Camera'}
+              <h3 className="text-sm font-black text-slate-900 tracking-tight">Scanner</h3>
+              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                {facingMode === 'environment' ? 'Rear Camera' : 'Front Camera'}
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <button 
               onClick={toggleCamera}
-              className="p-4 hover:bg-white rounded-2xl transition-all text-slate-400 hover:text-brand-600 shadow-sm hover:shadow-md"
+              className="p-2 hover:bg-slate-50 rounded-lg transition-all text-slate-400 hover:text-brand-600"
               title="Switch Camera"
             >
-              <RefreshCw className="h-6 w-6" />
+              <RefreshCw className="h-4 w-4" />
             </button>
-            <button 
-              onClick={onClose}
-              className="p-4 hover:bg-white rounded-2xl transition-all text-slate-400 hover:text-rose-600 shadow-sm hover:shadow-md"
-            >
-              <X className="h-7 w-7" />
-            </button>
+            {onClose && (
+              <button 
+                onClick={onClose}
+                className="p-2 hover:bg-slate-50 rounded-lg transition-all text-slate-400 hover:text-rose-500"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            )}
           </div>
         </div>
 
-        <div className="p-8 space-y-8">
+        <div className="p-4 lg:p-6 space-y-6">
           {/* Scanner Viewport */}
-          <div className="relative group">
-            <div id="reader" className="overflow-hidden rounded-[2.5rem] border-8 border-slate-100 shadow-inner bg-black aspect-square md:aspect-video"></div>
+          <div className="relative">
+            <div id="reader" className="overflow-hidden rounded-2xl border-2 border-slate-100 bg-black aspect-square md:aspect-video relative z-10"></div>
             
             {/* Flash Overlay */}
             <AnimatePresence>
@@ -212,128 +227,121 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, onClose,
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="absolute inset-0 bg-white z-10 pointer-events-none rounded-[2.5rem]"
+                  className="absolute inset-0 bg-white z-20 pointer-events-none rounded-2xl"
                 />
               )}
             </AnimatePresence>
 
             {!isScannerReady && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-900/50 rounded-[2.5rem] backdrop-blur-sm">
-                <div className="w-12 h-12 border-4 border-white border-t-transparent rounded-full animate-spin mb-4" />
-                <p className="text-white font-bold uppercase tracking-widest text-xs">Initializing Camera...</p>
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-50 rounded-2xl z-20">
+                <div className="w-8 h-8 border-3 border-brand-500 border-t-transparent rounded-full animate-spin mb-3" />
+                <p className="text-slate-400 font-bold uppercase tracking-widest text-[9px]">Starting Camera...</p>
               </div>
             )}
 
             {/* Laser Animation Overlay */}
-            <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
-              <div className="w-[80%] h-1 bg-brand-500/50 shadow-[0_0_15px_rgba(51,84,255,0.8)] animate-scan-line rounded-full" />
+            <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-20">
+              <div className="w-[90%] h-0.5 bg-brand-500/50 animate-scan-line rounded-full" />
             </div>
 
             {/* Corner Accents */}
-            <div className="absolute top-6 left-6 w-12 h-12 border-t-4 border-l-4 border-brand-500 rounded-tl-2xl opacity-50" />
-            <div className="absolute top-6 right-6 w-12 h-12 border-t-4 border-r-4 border-brand-500 rounded-tr-2xl opacity-50" />
-            <div className="absolute bottom-6 left-6 w-12 h-12 border-b-4 border-l-4 border-brand-500 rounded-bl-2xl opacity-50" />
-            <div className="absolute bottom-6 right-6 w-12 h-12 border-b-4 border-r-4 border-brand-500 rounded-br-2xl opacity-50" />
+            <div className="absolute top-4 left-4 w-8 h-8 border-t-2 border-l-2 border-brand-500/30 rounded-tl-xl z-20" />
+            <div className="absolute top-4 right-4 w-8 h-8 border-t-2 border-r-2 border-brand-500/30 rounded-tr-xl z-20" />
+            <div className="absolute bottom-4 left-4 w-8 h-8 border-b-2 border-l-2 border-brand-500/30 rounded-bl-xl z-20" />
+            <div className="absolute bottom-4 right-4 w-8 h-8 border-b-2 border-r-2 border-brand-500/30 rounded-br-xl z-20" />
           </div>
 
           {/* Feedback Area */}
-          <AnimatePresence mode="wait">
-            {lastScanned ? (
-              <motion.div
-                key="success"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="p-6 bg-emerald-50 rounded-[2rem] border border-emerald-100 flex items-center gap-6"
-              >
-                <div className="bg-emerald-500 p-4 rounded-2xl shadow-lg shadow-emerald-200">
-                  <CheckCircle2 className="h-8 w-8 text-white" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-lg font-black text-slate-900 leading-tight">{lastScanned.name}</h4>
-                  <div className="flex items-center gap-4 mt-2">
-                    <div>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Price</p>
-                      <p className="text-xl font-black text-brand-600">{formatCurrency(lastScanned.price)}</p>
-                    </div>
-                    <div className="h-8 w-px bg-emerald-200" />
-                    <div>
-                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Stock</p>
-                      <p className="text-xl font-black text-slate-900">{lastScanned.stock}</p>
+          <div className="min-h-[80px]">
+            <AnimatePresence mode="wait">
+              {lastScanned ? (
+                <motion.div
+                  key="success"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="p-4 bg-emerald-50 rounded-xl border border-emerald-100 flex items-center gap-4"
+                >
+                  <div className="bg-emerald-500 p-2.5 rounded-lg">
+                    <CheckCircle2 className="h-5 w-5 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-sm font-black text-slate-900">{lastScanned.name}</h4>
+                    <div className="flex items-center gap-3 mt-0.5">
+                      <p className="text-xs font-black text-brand-600">{formatCurrency(lastScanned.price)}</p>
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Stock: {lastScanned.stock}</span>
                     </div>
                   </div>
-                </div>
-                {isProcessing && (
-                  <div className="w-8 h-8 border-4 border-brand-600 border-t-transparent rounded-full animate-spin" />
-                )}
-              </motion.div>
-            ) : error ? (
-              <motion.div
-                key="error"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="p-6 bg-rose-50 rounded-[2rem] border border-rose-100 flex items-center gap-6"
-              >
-                <div className="bg-rose-500 p-4 rounded-2xl shadow-lg shadow-rose-200">
-                  <AlertCircle className="h-8 w-8 text-white" />
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-lg font-black text-rose-900 leading-tight">Scanner Alert</h4>
-                  <p className="text-sm font-medium text-rose-600 mt-1">{error}</p>
-                </div>
-                <button 
-                  onClick={() => setError(null)}
-                  className="p-2 hover:bg-rose-100 rounded-lg text-rose-400 transition-colors"
+                  {isProcessing && (
+                    <div className="w-5 h-5 border-2 border-brand-600 border-t-transparent rounded-full animate-spin" />
+                  )}
+                </motion.div>
+              ) : error ? (
+                <motion.div
+                  key="error"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="p-4 bg-rose-50 rounded-xl border border-rose-100 flex items-center gap-4"
                 >
-                  <X className="h-5 w-5" />
-                </button>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="idle"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="space-y-4"
-              >
-                <div className="p-10 text-center border-2 border-dashed border-slate-200 rounded-[2rem]">
-                  <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">Waiting for barcode...</p>
-                </div>
-                
-                <div className="flex items-center gap-4">
-                  <div className="flex-1 h-px bg-slate-100" />
-                  <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest">or</span>
-                  <div className="flex-1 h-px bg-slate-100" />
-                </div>
-
-                <div className="relative">
-                  <input 
-                    type="text"
-                    placeholder="Enter barcode manually..."
-                    className="w-full h-14 pl-12 pr-4 bg-slate-50 border-2 border-transparent focus:border-brand-500 focus:bg-white rounded-2xl outline-none transition-all font-bold text-slate-900"
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        const val = (e.target as HTMLInputElement).value;
-                        if (val) {
-                          const product = products.find(p => p.barcode === val);
-                          if (product) {
-                            playBeep();
-                            setLastScanned(product);
-                            setError(null);
-                            onScan(val);
-                          } else {
-                            setError(`Product with barcode ${val} not found`);
+                  <div className="bg-rose-500 p-2.5 rounded-lg">
+                    <AlertCircle className="h-5 w-5 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="text-sm font-black text-rose-900">Scan Error</h4>
+                    <p className="text-[10px] font-bold text-rose-600 mt-0.5">{error}</p>
+                  </div>
+                  <button 
+                    onClick={() => setError(null)}
+                    className="p-1.5 hover:bg-rose-100 rounded-lg text-rose-400 transition-colors"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="idle"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="space-y-3"
+                >
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest pl-1">Manual Barcode</label>
+                    <div className="relative">
+                      <input 
+                        type="text"
+                        placeholder="Enter barcode..."
+                        className="w-full h-12 pl-10 pr-4 bg-slate-50 border border-slate-200 focus:border-brand-500 focus:bg-white rounded-xl outline-none transition-all font-bold text-slate-900 text-sm placeholder:text-slate-300"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            const val = (e.target as HTMLInputElement).value;
+                            if (val) {
+                              const product = products.find(p => p.barcode === val);
+                              if (product) {
+                                playBeep();
+                                setLastScanned(product);
+                                setError(null);
+                                onScan(val);
+                                
+                                setTimeout(() => {
+                                  setLastScanned(null);
+                                }, 3000);
+                              } else {
+                                setError(`Barcode ${val} not found`);
+                                setTimeout(() => setError(null), 3000);
+                              }
+                              (e.target as HTMLInputElement).value = '';
+                            }
                           }
-                          (e.target as HTMLInputElement).value = '';
-                        }
-                      }
-                    }}
-                  />
-                  <Zap className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-300" />
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                        }}
+                      />
+                      <Zap className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300" />
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
     </div>

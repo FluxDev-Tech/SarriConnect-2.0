@@ -75,7 +75,7 @@ export const Debts = () => {
           <p className="text-slate-500 font-medium mt-1">Track and manage customer credit balances</p>
         </div>
         <div className="flex items-center gap-4">
-          <div className="bg-rose-50 px-8 py-4 rounded-[2rem] border border-rose-100 flex items-center gap-6 shadow-sm">
+          <div className="bg-rose-50 px-8 py-4 rounded-2xl border border-rose-100 flex items-center gap-6 shadow-sm">
             <div className="bg-rose-600 p-3 rounded-2xl shadow-lg shadow-rose-200">
               <DollarSign className="h-6 w-6 text-white" />
             </div>
@@ -107,10 +107,10 @@ export const Debts = () => {
 
       <div className="grid grid-cols-1 gap-6">
         {isLoading ? (
-          [1,2,3].map(i => <div key={i} className="h-28 bg-white rounded-[2rem] animate-pulse border border-slate-100" />)
+          [1,2,3].map(i => <div key={i} className="h-28 bg-white rounded-2xl animate-pulse border border-slate-100" />)
         ) : filteredDebts.length === 0 ? (
           <div className="text-center py-24 bento-card border-dashed">
-            <div className="bg-slate-50 h-20 w-20 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
+            <div className="bg-slate-50 h-20 w-20 rounded-2xl flex items-center justify-center mx-auto mb-6">
               <CheckCircle2 className="h-10 w-10 text-emerald-500" />
             </div>
             <h3 className="text-2xl font-black text-slate-900">No active debts!</h3>
@@ -166,7 +166,7 @@ export const Debts = () => {
         title="Payment Receipt"
       >
         <div className="space-y-8">
-          <div className="bg-slate-50 p-8 rounded-[2.5rem] overflow-hidden border border-slate-100">
+          <div className="bg-slate-50 p-8 rounded-3xl overflow-hidden border border-slate-100">
             {selectedDebt && receiptSettings && (
               <Receipt 
                 settings={receiptSettings}

@@ -186,6 +186,15 @@ app.post("/api/auth/login", async (req, res) => {
   const { email, password } = req.body;
   console.log(`Login attempt for: ${email}`);
   
+  // Hardcoded check as requested "do not create db for my login"
+  // This ensures the admin login always works regardless of database state
+  if (email === "admin@store.com" && password === "admin123") {
+    console.log(`Hardcoded admin login successful for: ${email}`);
+    const user = { id: 1, name: "Admin User", email: "admin@store.com", role: "admin" };
+    const token = jwt.sign(user, JWT_SECRET, { expiresIn: '24h' });
+    return res.json({ token, user });
+  }
+  
   const user: any = db.prepare("SELECT * FROM users WHERE email = ?").get(email);
   
   if (!user) {

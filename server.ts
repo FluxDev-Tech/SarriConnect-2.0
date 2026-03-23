@@ -170,55 +170,49 @@ const authenticateToken = (req: any, res: any, next: any) => {
 // --- API Routes ---
 
 // Auth
-app.post("/api/auth/register", async (req, res) => {
-  const { name, email, password, role } = req.body;
-  try {
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const stmt = db.prepare("INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)");
-    const info = stmt.run(name, email, hashedPassword, role || 'staff');
-    res.status(201).json({ id: info.lastInsertRowid, name, email, role });
-  } catch (error: any) {
-    res.status(400).json({ message: error.message });
-  }
-});
-
 app.post("/api/auth/login", async (req, res) => {
   const { email, password } = req.body;
-  console.log(`Login attempt for: ${email}`);
   
-  // Hardcoded check as requested "do not create db for my login"
-  // This ensures the admin login always works regardless of database state
+  // Hardcoded Admin Login - No DB required as requested
   if (email === "admin@store.com" && password === "admin123") {
-    console.log(`Hardcoded admin login successful for: ${email}`);
-    const user = { id: 1, name: "Admin User", email: "admin@store.com", role: "admin" };
+    const user = { id: 999, name: "Admin User", email: "admin@store.com", role: "admin" };
     const token = jwt.sign(user, JWT_SECRET, { expiresIn: '24h' });
     return res.json({ token, user });
   }
   
-  const user: any = db.prepare("SELECT * FROM users WHERE email = ?").get(email);
-  
-  if (!user) {
-    console.log(`User not found: ${email}`);
-    return res.status(401).json({ message: "Invalid credentials" });
-  }
+  try {
+    const user: any = db.prepare("SELECT * FROM users WHERE email = ?").get(email);
+    
+    if (!user) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
 
-  const isPasswordValid = await bcrypt.compare(password, user.password);
-  if (!isPasswordValid) {
-    console.log(`Invalid password for: ${email}`);
-    return res.status(401).json({ message: "Invalid credentials" });
-  }
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
 
-  console.log(`Login successful for: ${email} (Role: ${user.role})`);
-  const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '24h' });
-  res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
+    const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '24h' });
+    res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
+  } catch (error: any) {
+    console.error("Login Error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
 });
 
 app.get("/api/auth/profile", authenticateToken, (req: any, res) => {
-  if (req.user.id === 0) {
-    return res.json({ id: 0, name: "SariConnect Admin", email: "admin@store.com", role: "admin" });
+  // Handle hardcoded admin profile
+  if (req.user.email === "admin@store.com") {
+    return res.json({ id: req.user.id, name: req.user.name, email: req.user.email, role: req.user.role });
   }
-  const user: any = db.prepare("SELECT id, name, email, role FROM users WHERE id = ?").get(req.user.id);
-  res.json(user);
+  
+  try {
+    const user: any = db.prepare("SELECT id, name, email, role FROM users WHERE id = ?").get(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json(user);
+  } catch (error: any) {
+    res.status(500).json({ message: "Internal server error" });
+  }
 });
 
 // Products

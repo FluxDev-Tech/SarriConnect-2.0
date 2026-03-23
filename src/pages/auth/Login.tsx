@@ -22,13 +22,26 @@ export const Login = () => {
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
-  const { register, handleSubmit, formState: { errors } } = useForm<LoginForm>({
+  const { register, handleSubmit, watch, formState: { errors } } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       email: 'admin@store.com',
       password: 'admin123',
     },
   });
+
+  const watchedEmail = watch('email');
+  const watchedPassword = watch('password');
+
+  // Automatic login when admin credentials are typed correctly
+  React.useEffect(() => {
+    if (watchedEmail === 'admin@store.com' && watchedPassword === 'admin123' && !isLoading) {
+      const timer = setTimeout(() => {
+        handleSubmit(onSubmit)();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [watchedEmail, watchedPassword, handleSubmit]);
 
   const onSubmit = async (data: LoginForm) => {
     setIsLoading(true);

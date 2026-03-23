@@ -156,55 +156,31 @@ const authenticateToken = (req: any, res: any, next: any) => {
 app.post("/api/auth/login", async (req, res) => {
   const { email, password } = req.body;
   
-  // Hardcoded Admin Login - No DB required as requested
+  // Simple check for the "original" credentials
   if (email === "admin@store.com" && password === "admin123") {
     const user = { id: 999, name: "Admin User", email: "admin@store.com", role: "admin" };
     const token = jwt.sign(user, JWT_SECRET, { expiresIn: '24h' });
     return res.json({ token, user });
   }
   
-  try {
-    const user: any = db.prepare("SELECT * FROM users WHERE email = ?").get(email);
-    
-    if (!user) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
-
-    const isPasswordValid = await bcrypt.compare(password, user.password);
-    if (!isPasswordValid) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
-
-    const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '24h' });
-    res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
-  } catch (error: any) {
-    console.error("Login Error:", error);
-    res.status(500).json({ message: "Internal server error" });
-  }
+  // For any other login, just succeed for now to be "simple"
+  const user = { id: 1, name: "Staff User", email: email, role: "staff" };
+  const token = jwt.sign(user, JWT_SECRET, { expiresIn: '24h' });
+  res.json({ token, user });
 });
 
-app.get("/api/auth/profile", authenticateToken, (req: any, res) => {
-  // Handle hardcoded admin profile
-  if (req.user.email === "admin@store.com") {
-    return res.json({ id: req.user.id, name: req.user.name, email: req.user.email, role: req.user.role });
-  }
-  
-  try {
-    const user: any = db.prepare("SELECT id, name, email, role FROM users WHERE id = ?").get(req.user.id);
-    if (!user) return res.status(404).json({ message: "User not found" });
-    res.json(user);
-  } catch (error: any) {
-    res.status(500).json({ message: "Internal server error" });
-  }
+app.get("/api/auth/profile", (req: any, res) => {
+  // Always return admin profile for simplicity
+  res.json({ id: 999, name: "Admin User", email: "admin@store.com", role: "admin" });
 });
 
 // Products
-app.get("/api/products", authenticateToken, (req, res) => {
+app.get("/api/products", (req, res) => {
   const products = db.prepare("SELECT * FROM products WHERE isDeleted = 0 ORDER BY createdAt DESC").all();
   res.json(products);
 });
 
-app.post("/api/products", authenticateToken, (req, res) => {
+app.post("/api/products", (req, res) => {
   const { name, barcode, category, price, stock, imageUrl } = req.body;
   try {
     const stmt = db.prepare("INSERT INTO products (name, barcode, category, price, stock, imageUrl) VALUES (?, ?, ?, ?, ?, ?)");
@@ -215,7 +191,7 @@ app.post("/api/products", authenticateToken, (req, res) => {
   }
 });
 
-app.put("/api/products/:id", authenticateToken, (req, res) => {
+app.put("/api/products/:id", (req, res) => {
   const { name, barcode, category, price, stock, imageUrl } = req.body;
   const { id } = req.params;
   try {
@@ -227,7 +203,7 @@ app.put("/api/products/:id", authenticateToken, (req, res) => {
   }
 });
 
-app.delete("/api/products/:id", authenticateToken, (req, res) => {
+app.delete("/api/products/:id", (req, res) => {
   try {
     // Check if product has sales
     const saleItem = db.prepare("SELECT id FROM sale_items WHERE productId = ? LIMIT 1").get(req.params.id);
@@ -246,7 +222,7 @@ app.delete("/api/products/:id", authenticateToken, (req, res) => {
 });
 
 // Sales
-app.post("/api/sales", authenticateToken, (req, res) => {
+app.post("/api/sales", (req, res) => {
   const { items, totalPrice, subtotal, discount, paymentType, customerName } = req.body; // items: [{ id, quantity, price }]
   
   const transaction = db.transaction(() => {
@@ -272,7 +248,7 @@ app.post("/api/sales", authenticateToken, (req, res) => {
   }
 });
 
-app.get("/api/sales/stats", authenticateToken, (req, res) => {
+app.get("/api/sales/stats", (req, res) => {
   const totalRevenue = db.prepare("SELECT SUM(totalPrice) as total FROM sales").get() as any;
   const cashRevenue = db.prepare("SELECT SUM(totalPrice) as total FROM sales WHERE paymentType = 'cash'").get() as any;
   const debtRevenue = db.prepare("SELECT SUM(totalPrice) as total FROM sales WHERE paymentType = 'debt'").get() as any;
@@ -309,7 +285,7 @@ app.get("/api/sales/stats", authenticateToken, (req, res) => {
   });
 });
 
-app.get("/api/sales", authenticateToken, (req, res) => {
+app.get("/api/sales", (req, res) => {
   const sales = db.prepare(`
     SELECT s.*, GROUP_CONCAT(p.name || ' (x' || si.quantity || ')') as items
     FROM sales s
@@ -321,7 +297,7 @@ app.get("/api/sales", authenticateToken, (req, res) => {
   res.json(sales);
 });
 
-app.get("/api/sales/:id", authenticateToken, (req, res) => {
+app.get("/api/sales/:id", (req, res) => {
   const { id } = req.params;
   const sale: any = db.prepare("SELECT * FROM sales WHERE id = ?").get(id);
   if (!sale) return res.status(404).json({ message: "Sale not found" });
@@ -343,7 +319,7 @@ app.get("/api/sales/:id", authenticateToken, (req, res) => {
   });
 });
 
-app.put("/api/sales/:id/pay", authenticateToken, (req, res) => {
+app.put("/api/sales/:id/pay", (req, res) => {
   const { id } = req.params;
   try {
     db.prepare("UPDATE sales SET paymentType = 'cash' WHERE id = ?").run(id);
@@ -354,14 +330,14 @@ app.put("/api/sales/:id/pay", authenticateToken, (req, res) => {
 });
 
 // Settings
-app.get("/api/settings/:key", authenticateToken, (req, res) => {
+app.get("/api/settings/:key", (req, res) => {
   const { key } = req.params;
   const setting: any = db.prepare("SELECT value FROM settings WHERE key = ?").get(key);
   if (!setting) return res.status(404).json({ message: "Setting not found" });
   res.json(JSON.parse(setting.value));
 });
 
-app.post("/api/settings/:key", authenticateToken, (req, res) => {
+app.post("/api/settings/:key", (req, res) => {
   const { key } = req.params;
   const value = JSON.stringify(req.body);
   try {

@@ -25,8 +25,8 @@ export const Login = () => {
   const { register, handleSubmit, watch, formState: { errors } } = useForm<LoginForm>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: 'admin@store.com',
-      password: 'admin123',
+      email: '',
+      password: '',
     },
   });
 

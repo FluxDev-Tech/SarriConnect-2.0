@@ -24,9 +24,15 @@ interface AppState {
   markAsPaid: (saleId: number) => Promise<void>;
 }
 
+const getInitialToken = () => {
+  const token = localStorage.getItem('token');
+  if (token === 'undefined' || token === 'null') return null;
+  return token;
+};
+
 export const useStore = create<AppState>((set, get) => ({
   user: JSON.parse(localStorage.getItem('user') || 'null'),
-  token: localStorage.getItem('token'),
+  token: getInitialToken(),
   products: [],
   stats: null,
   receiptSettings: null,
@@ -34,6 +40,10 @@ export const useStore = create<AppState>((set, get) => ({
   error: null,
 
   setAuth: (user, token) => {
+    if (!token || token === 'undefined' || token === 'null') {
+      console.error('Invalid token received');
+      return;
+    }
     localStorage.setItem('user', JSON.stringify(user));
     localStorage.setItem('token', token);
     set({ user, token });

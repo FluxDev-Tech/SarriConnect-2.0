@@ -6,8 +6,8 @@ const api = axios.create({
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+  if (token && token !== 'undefined' && token !== 'null') {
+    config.headers.set('Authorization', `Bearer ${token}`);
     console.log(`Request to ${config.url} with token: ${token.substring(0, 10)}...`);
   } else {
     console.log(`Request to ${config.url} without token`);

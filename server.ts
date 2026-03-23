@@ -147,9 +147,15 @@ app.use(express.urlencoded({ limit: '10mb', extended: true }));
 // Auth Middleware
 const authenticateToken = (req: any, res: any, next: any) => {
   const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+  
+  const token = authHeader.split(' ')[1];
 
-  if (!token) return res.status(401).json({ message: "Unauthorized" });
+  if (!token || token === 'undefined' || token === 'null') {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
 
   jwt.verify(token, JWT_SECRET, (err: any, user: any) => {
     if (err) {

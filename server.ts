@@ -87,8 +87,8 @@ try {
 }
 
 // Seed Data
-const seedData = async () => {
-  const hashedPassword = await bcrypt.hash("admin123", 10);
+const seedData = () => {
+  const hashedPassword = bcrypt.hashSync("admin123", 10);
   const user: any = db.prepare("SELECT * FROM users WHERE email = ?").get("admin@store.com");
   
   if (!user) {
@@ -178,12 +178,22 @@ app.post("/api/auth/register", async (req, res) => {
 
 app.post("/api/auth/login", async (req, res) => {
   const { email, password } = req.body;
+  console.log(`Login attempt for: ${email}`);
+  
   const user: any = db.prepare("SELECT * FROM users WHERE email = ?").get(email);
   
-  if (!user || !(await bcrypt.compare(password, user.password))) {
+  if (!user) {
+    console.log(`User not found: ${email}`);
     return res.status(401).json({ message: "Invalid credentials" });
   }
 
+  const isPasswordValid = await bcrypt.compare(password, user.password);
+  if (!isPasswordValid) {
+    console.log(`Invalid password for: ${email}`);
+    return res.status(401).json({ message: "Invalid credentials" });
+  }
+
+  console.log(`Login successful for: ${email} (Role: ${user.role})`);
   const token = jwt.sign({ id: user.id, email: user.email, role: user.role }, JWT_SECRET, { expiresIn: '24h' });
   res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
 });

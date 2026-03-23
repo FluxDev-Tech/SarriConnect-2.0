@@ -12,9 +12,6 @@ interface ReceiptProps {
   receivedAmount?: number;
   change?: number;
   paymentType: string;
-  customerName?: string;
-  customerPhone?: string;
-  customerAddress?: string;
   date?: string;
   receiptNumber?: string;
 }
@@ -28,9 +25,6 @@ export const Receipt: React.FC<ReceiptProps> = ({
   receivedAmount,
   change,
   paymentType, 
-  customerName,
-  customerPhone,
-  customerAddress,
   date = new Date().toISOString(),
   receiptNumber = `SALE_${Math.floor(Math.random() * 10000000)}`
 }) => {
@@ -84,16 +78,6 @@ export const Receipt: React.FC<ReceiptProps> = ({
           </span>
         </div>
       </div>
-
-      {/* Customer Section */}
-      {customerName && (
-        <div className="mt-4 p-3 bg-slate-50 border-l-4 border-slate-900 rounded-r-xl space-y-1">
-          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Customer Details</p>
-          <p className="text-xs font-black text-slate-900">{customerName}</p>
-          {customerPhone && <p className="text-[10px] text-slate-500 flex items-center gap-1">📱 {customerPhone}</p>}
-          {customerAddress && <p className="text-[10px] text-slate-500 flex items-center gap-1">🏠 {customerAddress}</p>}
-        </div>
-      )}
 
       <div className="border-t border-black border-dotted my-4"></div>
 
@@ -150,12 +134,6 @@ export const Receipt: React.FC<ReceiptProps> = ({
           </>
         )}
       </div>
-
-      {paymentType === 'debt' && customerName && (
-        <div className="bg-rose-50 text-rose-600 py-3 px-4 rounded-xl text-[10px] font-black text-center mb-6 flex items-center justify-center gap-2 border border-rose-100">
-          <span>⚠️</span> BALANCE TO BE PAID BY: {customerName.toUpperCase()}
-        </div>
-      )}
 
       {/* Barcode Section */}
       <div className="text-center space-y-2 mb-6">

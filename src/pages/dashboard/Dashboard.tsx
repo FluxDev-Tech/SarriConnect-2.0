@@ -64,7 +64,7 @@ const RecentSalesList = () => {
               <ShoppingCart className="h-5 w-5" />
             </div>
             <div>
-              <p className="font-bold text-gray-900 truncate max-w-[150px]">{sale.customerName || 'Walk-in'}</p>
+              <p className="font-bold text-gray-900 truncate max-w-[150px]">Transaction #{sale.id}</p>
               <div className="flex items-center gap-2">
                 <p className="text-xs text-gray-500">{new Date(sale.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
                 <span className="h-1 w-1 rounded-full bg-gray-300" />
@@ -188,7 +188,7 @@ export const Dashboard = () => {
               <p className="text-xs lg:text-sm text-slate-400 font-medium">Daily revenue performance</p>
             </div>
           </div>
-          <div className="h-[250px] sm:h-[350px]">
+          <div className="h-[250px] sm:h-[400px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData}>
                 <defs>
@@ -235,9 +235,6 @@ export const Dashboard = () => {
         >
           <div className="flex items-center justify-between mb-6 lg:mb-8">
             <h3 className="text-lg lg:text-xl font-bold text-slate-900">Recent Activity</h3>
-            <Link to="/sales" className="p-2 hover:bg-slate-50 rounded-xl transition-colors">
-              <ArrowUpRight className="h-5 w-5 text-slate-400" />
-            </Link>
           </div>
           <div className="flex-1 overflow-y-auto pr-2 -mr-2 max-h-[400px] lg:max-h-none">
             <RecentSalesList />

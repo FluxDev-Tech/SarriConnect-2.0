@@ -126,7 +126,7 @@ export const Debts = () => {
                 </div>
                 <div>
                   <div className="flex items-center gap-3">
-                    <h3 className="text-xl font-black text-slate-900">{debt.customerName}</h3>
+                    <h3 className="text-xl font-black text-slate-900">Transaction #{debt.id}</h3>
                     <span className="px-3 py-1 rounded-lg bg-rose-50 text-rose-600 text-[10px] font-black uppercase tracking-widest border border-rose-100">
                       Unpaid
                     </span>

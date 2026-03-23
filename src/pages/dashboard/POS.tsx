@@ -41,9 +41,6 @@ export const POS = () => {
   const [selectedCategory, setSelectedCategory] = React.useState<string>('All');
   const [cart, setCart] = React.useState<CartItem[]>([]);
   const [paymentType, setPaymentType] = React.useState<'cash' | 'debt'>(initialType);
-  const [customerName, setCustomerName] = React.useState('');
-  const [customerPhone, setCustomerPhone] = React.useState('');
-  const [customerAddress, setCustomerAddress] = React.useState('');
   const [receivedAmount, setReceivedAmount] = React.useState<string>('');
   const [showSuccess, setShowSuccess] = React.useState(false);
   const [showReceipt, setShowReceipt] = React.useState(false);
@@ -113,7 +110,6 @@ export const POS = () => {
 
   const handleCheckout = async () => {
     if (cart.length === 0) return;
-    if (paymentType === 'debt' && !customerName) return;
     if (paymentType === 'cash' && receivedAmount && parseFloat(receivedAmount) < totalAmount) return;
 
     const items = cart.map(item => ({
@@ -126,7 +122,7 @@ export const POS = () => {
       // Add a small artificial delay to show loading state
       await new Promise(resolve => setTimeout(resolve, 800));
       
-      await recordSale(items, totalAmount, subtotal, 0, paymentType, customerName);
+      await recordSale(items, totalAmount, subtotal, 0, paymentType);
       playSound('success');
       
       // Trigger confetti
@@ -145,16 +141,10 @@ export const POS = () => {
         receivedAmount: parseFloat(receivedAmount) || totalAmount,
         change: Math.max(0, change),
         paymentType,
-        customerName,
-        customerPhone,
-        customerAddress,
         date: new Date().toISOString()
       });
 
       setCart([]);
-      setCustomerName('');
-      setCustomerPhone('');
-      setCustomerAddress('');
       setReceivedAmount('');
       setPaymentType('cash');
       setShowSuccess(true);
@@ -472,28 +462,8 @@ export const POS = () => {
                 exit={{ opacity: 0, height: 0 }}
                 className="overflow-hidden space-y-3"
               >
-                <Input 
-                  label="Customer Name" 
-                  placeholder="Who is borrowing?" 
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                  className="bg-white rounded-xl h-10 border-slate-200 text-sm"
-                />
-                <div className="grid grid-cols-2 gap-3">
-                  <Input 
-                    label="Phone Number" 
-                    placeholder="Optional" 
-                    value={customerPhone}
-                    onChange={(e) => setCustomerPhone(e.target.value)}
-                    className="bg-white rounded-xl h-10 border-slate-200 text-sm"
-                  />
-                  <Input 
-                    label="Address" 
-                    placeholder="Optional" 
-                    value={customerAddress}
-                    onChange={(e) => setCustomerAddress(e.target.value)}
-                    className="bg-white rounded-xl h-10 border-slate-200 text-sm"
-                  />
+                <div className="p-4 rounded-2xl bg-rose-50 border border-rose-100">
+                  <p className="text-xs font-bold text-rose-600 text-center">Recording as an anonymous debt.</p>
                 </div>
               </motion.div>
             )}
@@ -510,7 +480,6 @@ export const POS = () => {
             className="w-full h-14 text-base font-black rounded-2xl bg-brand-600 hover:bg-brand-700 shadow-xl shadow-brand-200/50" 
             disabled={
               cart.length === 0 || 
-              (paymentType === 'debt' && !customerName) ||
               (paymentType === 'cash' && receivedAmount !== '' && parseFloat(receivedAmount) < totalAmount)
             }
             onClick={handleCheckout}
@@ -629,9 +598,6 @@ export const POS = () => {
                 receivedAmount={lastOrder.receivedAmount}
                 change={lastOrder.change}
                 paymentType={lastOrder.paymentType}
-                customerName={lastOrder.customerName}
-                customerPhone={lastOrder.customerPhone}
-                customerAddress={lastOrder.customerAddress}
                 date={lastOrder.date}
               />
             )}

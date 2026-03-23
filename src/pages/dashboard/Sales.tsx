@@ -148,12 +148,11 @@ export const SalesHistory = () => {
   }, [sales, searchQuery, activeTab, dateFilter, sortBy]);
 
   const exportToCSV = () => {
-    const headers = ['Date', 'Time', 'Items', 'Customer', 'Type', 'Total'];
+    const headers = ['Date', 'Time', 'Items', 'Type', 'Total'];
     const data = filteredSales.map(s => [
       new Date(s.createdAt).toLocaleDateString(),
       new Date(s.createdAt).toLocaleTimeString(),
       s.items?.replace(/,/g, ';'),
-      s.customerName || 'Walk-in',
       s.paymentType,
       s.totalPrice
     ]);
@@ -334,7 +333,6 @@ export const SalesHistory = () => {
               <tr className="bg-slate-50/50 border-b border-slate-100">
                 <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Date & Time</th>
                 <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Items</th>
-                <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Customer</th>
                 <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider">Type</th>
                 <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-right">Total</th>
                 <th className="px-6 py-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-right">Actions</th>
@@ -368,9 +366,6 @@ export const SalesHistory = () => {
                     </td>
                     <td className="px-6 py-4">
                       <p className="text-sm text-slate-600 line-clamp-1 max-w-xs font-medium">{sale.items}</p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="text-sm font-bold text-slate-900">{sale.customerName || 'Walk-in'}</span>
                     </td>
                     <td className="px-6 py-4">
                       <div className={cn(
@@ -432,7 +427,7 @@ export const SalesHistory = () => {
                     <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
                       {new Date(sale.createdAt).toLocaleDateString()} • {new Date(sale.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>
-                    <span className="font-black text-slate-900 mt-0.5">{sale.customerName || 'Walk-in'}</span>
+                    <span className="font-black text-slate-900 mt-0.5">Transaction #{sale.id}</span>
                   </div>
                   <div className={cn(
                     "inline-flex items-center gap-1 px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider",

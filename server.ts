@@ -88,9 +88,10 @@ try {
 
 // Seed Data
 const seedData = async () => {
-  const userCount = (db.prepare("SELECT COUNT(*) as count FROM users").get() as any).count;
-  if (userCount === 0) {
-    const hashedPassword = await bcrypt.hash("admin123", 10);
+  const hashedPassword = await bcrypt.hash("admin123", 10);
+  const user: any = db.prepare("SELECT * FROM users WHERE email = ?").get("admin@store.com");
+  
+  if (!user) {
     db.prepare("INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)").run(
       "Admin User",
       "admin@store.com",
@@ -98,6 +99,10 @@ const seedData = async () => {
       "admin"
     );
     console.log("Default admin user created: admin@store.com / admin123");
+  } else {
+    // Ensure the password is reset to admin123 if it's the default admin
+    db.prepare("UPDATE users SET password = ? WHERE email = ?").run(hashedPassword, "admin@store.com");
+    console.log("Admin password ensured: admin@store.com / admin123");
   }
 
   const productCount = (db.prepare("SELECT COUNT(*) as count FROM products").get() as any).count;

@@ -179,6 +179,17 @@ app.post("/api/auth/register", async (req, res) => {
 app.post("/api/auth/login", async (req, res) => {
   const { email, password } = req.body;
   console.log(`Login attempt for: ${email}`);
+
+  // --- HARDCODED ADMIN BYPASS (For Vercel/Simple Deployment) ---
+  if (email === "admin@store.com" && password === "admin123") {
+    console.log(`Hardcoded Admin Login successful for: ${email}`);
+    const token = jwt.sign({ id: 0, email: "admin@store.com", role: "admin" }, JWT_SECRET, { expiresIn: '24h' });
+    return res.json({ 
+      token, 
+      user: { id: 0, name: "SariConnect Admin", email: "admin@store.com", role: "admin" } 
+    });
+  }
+  // -------------------------------------------------------------
   
   const user: any = db.prepare("SELECT * FROM users WHERE email = ?").get(email);
   
@@ -199,6 +210,9 @@ app.post("/api/auth/login", async (req, res) => {
 });
 
 app.get("/api/auth/profile", authenticateToken, (req: any, res) => {
+  if (req.user.id === 0) {
+    return res.json({ id: 0, name: "SariConnect Admin", email: "admin@store.com", role: "admin" });
+  }
   const user: any = db.prepare("SELECT id, name, email, role FROM users WHERE id = ?").get(req.user.id);
   res.json(user);
 });

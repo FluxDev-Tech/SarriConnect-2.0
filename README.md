@@ -1,5 +1,7 @@
 # 🏪 SariConnect Pro: Sari-Sari Store Management System
 
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fyourusername%2Fsariconnect)
+
 SariConnect is a comprehensive, full-stack management solution designed specifically for Sari-Sari stores. It streamlines daily operations, from inventory tracking and sales recording to customer debt management and professional receipt generation.
 
 ![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
@@ -88,20 +90,28 @@ SariConnect is a comprehensive, full-stack management solution designed specific
 
 ---
 
-## 🔐 Default Admin Credentials
+## 🔄 Automatic Deployment
 
-When you first run the application, a default administrator account is created:
+Once you connect your GitHub repository to Vercel, you **do not need to install anything manually** or run build commands anymore.
+
+1.  **Push to GitHub**: Every time you `git push` your changes, Vercel will automatically detect the update.
+2.  **Automatic Build**: Vercel will automatically install dependencies and build your app in the cloud.
+3.  **Live Update**: Your website at `sariconnect-ph.vercel.app` will update itself within seconds.
+
+---
+
+## 🔐 Admin Credentials (Vercel Ready)
+
+To ensure you can always log in, even on Vercel's read-only filesystem, the following credentials are **hardcoded** and do not require a database:
 
 - **Email:** `admin@store.com`
 - **Password:** `admin123`
-
-*It is highly recommended to change these credentials after your first login.*
 
 ---
 
 ## 🚀 Deployment to Vercel
 
-To deploy SariConnect to Vercel, follow these steps:
+To deploy SariConnect to `sariconnect-ph.vercel.app`:
 
 1. **Push your code to GitHub.**
 2. **Connect your GitHub repository to Vercel.**
@@ -114,10 +124,8 @@ To deploy SariConnect to Vercel, follow these steps:
    - Output Directory: `dist`
    - Install Command: `npm install`
 
-### ⚠️ Important Note on Database
-This application uses **SQLite** (`better-sqlite3`), which is a file-based database. 
-- **On Vercel**: Vercel's filesystem is read-only and ephemeral. This means any data you save (products, sales, settings) will be **lost** when the server restarts or you redeploy.
-- **For Production**: It is recommended to migrate to a persistent cloud database (like Supabase, Neon, or MongoDB) if you need permanent storage on Vercel.
+### ⚠️ Important Note on Data
+While the **login** is now "Vercel-friendly" (hardcoded), other data like **Products** and **Sales** still use SQLite. On Vercel, this data will be **temporary** and will reset when the server restarts. For permanent data storage on Vercel, consider connecting to a cloud database like **Supabase** or **Neon**.
 
 ---
 

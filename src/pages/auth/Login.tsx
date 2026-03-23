@@ -30,22 +30,6 @@ export const Login = () => {
     setIsLoading(true);
     setError(null);
     try {
-      // --- CLIENT-SIDE HARDCODED LOGIN (Bypasses Server) ---
-      if (data.email === 'admin@store.com' && data.password === 'admin123') {
-        console.log('Client-side login successful');
-        const mockUser = {
-          id: 0,
-          name: 'SariConnect Admin',
-          email: 'admin@store.com',
-          role: 'admin' as const
-        };
-        const mockToken = 'mock-jwt-token-for-admin';
-        setAuth(mockUser, mockToken);
-        navigate('/');
-        return;
-      }
-      // -----------------------------------------------------
-
       const res = await api.post('/auth/login', data);
       
       if (res.data.user.role !== 'admin') {

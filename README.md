@@ -56,8 +56,8 @@ SariConnect is a comprehensive, full-stack management solution designed specific
 ## ⚙️ Getting Started
 
 ### Prerequisites
-- Node.js (v18 or higher)
-- npm or yarn
+- **Node.js**: v18 or higher
+- **npm**: (comes with Node.js)
 
 ### Installation
 
@@ -78,12 +78,46 @@ SariConnect is a comprehensive, full-stack management solution designed specific
    JWT_SECRET=your_super_secret_key
    GEMINI_API_KEY=your_gemini_api_key
    ```
+   *Note: You can use any random string for `JWT_SECRET`.*
 
 4. **Start the development server**
    ```bash
    npm run dev
    ```
    The app will be available at `http://localhost:3000`.
+
+---
+
+## 🔐 Default Admin Credentials
+
+When you first run the application, a default administrator account is created:
+
+- **Email:** `admin@store.com`
+- **Password:** `admin123`
+
+*It is highly recommended to change these credentials after your first login.*
+
+---
+
+## 🚀 Deployment to Vercel
+
+To deploy SariConnect to Vercel, follow these steps:
+
+1. **Push your code to GitHub.**
+2. **Connect your GitHub repository to Vercel.**
+3. **Configure Environment Variables** in the Vercel dashboard:
+   - `JWT_SECRET`: (A random string)
+   - `GEMINI_API_KEY`: (Your Google AI API key)
+   - `NODE_ENV`: `production`
+4. **Build Settings**:
+   - Build Command: `npm run build`
+   - Output Directory: `dist`
+   - Install Command: `npm install`
+
+### ⚠️ Important Note on Database
+This application uses **SQLite** (`better-sqlite3`), which is a file-based database. 
+- **On Vercel**: Vercel's filesystem is read-only and ephemeral. This means any data you save (products, sales, settings) will be **lost** when the server restarts or you redeploy.
+- **For Production**: It is recommended to migrate to a persistent cloud database (like Supabase, Neon, or MongoDB) if you need permanent storage on Vercel.
 
 ---
 

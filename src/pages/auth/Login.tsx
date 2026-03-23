@@ -33,16 +33,6 @@ export const Login = () => {
   const watchedEmail = watch('email');
   const watchedPassword = watch('password');
 
-  // Automatic login when admin credentials are typed correctly
-  React.useEffect(() => {
-    if (watchedEmail === 'admin@store.com' && watchedPassword === 'admin123' && !isLoading) {
-      const timer = setTimeout(() => {
-        onSubmit({ email: watchedEmail, password: watchedPassword });
-      }, 300);
-      return () => clearTimeout(timer);
-    }
-  }, [watchedEmail, watchedPassword]);
-
   const onSubmit = async (data: LoginForm) => {
     setIsLoading(true);
     setError(null);

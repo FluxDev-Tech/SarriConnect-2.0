@@ -119,6 +119,35 @@ const seedData = () => {
     db.prepare("INSERT INTO settings (key, value) VALUES (?, ?)").run("receipt", JSON.stringify(defaultReceipt));
     console.log("Default settings seeded.");
   }
+
+  const salesCount = (db.prepare("SELECT COUNT(*) as count FROM sales").get() as any).count;
+  if (salesCount === 0) {
+    const products = db.prepare("SELECT * FROM products").all() as any[];
+    if (products.length > 0) {
+      // Create some sales for the last 7 days
+      const stmt = db.prepare("INSERT INTO sales (totalPrice, subtotal, discount, paymentType, customerName, createdAt) VALUES (?, ?, ?, ?, ?, ?)");
+      const itemStmt = db.prepare("INSERT INTO sale_items (saleId, productId, quantity, priceAtSale) VALUES (?, ?, ?, ?)");
+      
+      for (let i = 0; i < 15; i++) {
+        const date = new Date();
+        date.setDate(date.getDate() - Math.floor(Math.random() * 7));
+        const totalPrice = Math.floor(Math.random() * 500) + 50;
+        const paymentType = Math.random() > 0.3 ? 'cash' : 'debt';
+        const customerName = paymentType === 'debt' ? "Juan Dela Cruz" : null;
+        
+        const info = stmt.run(totalPrice, totalPrice, 0, paymentType, customerName, date.toISOString());
+        const saleId = info.lastInsertRowid;
+        
+        // Add 1-3 items per sale
+        const itemCount = Math.floor(Math.random() * 3) + 1;
+        for (let j = 0; j < itemCount; j++) {
+          const p = products[Math.floor(Math.random() * products.length)];
+          itemStmt.run(saleId, p.id, Math.floor(Math.random() * 2) + 1, p.price);
+        }
+      }
+      console.log("Sample sales seeded.");
+    }
+  }
 };
 
 seedData();

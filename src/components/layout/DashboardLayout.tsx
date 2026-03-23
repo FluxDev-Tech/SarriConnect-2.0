@@ -166,7 +166,7 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
                 <p className="text-[10px] text-brand-500 font-bold uppercase tracking-wider">{user?.role}</p>
               </div>
               <div className="h-10 w-10 rounded-full bg-brand-50 flex items-center justify-center text-brand-600 font-bold border border-brand-100">
-                {user?.name.charAt(0)}
+                {user?.name?.charAt(0) || '?'}
               </div>
             </div>
           </div>
@@ -247,7 +247,7 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
                 >
                   <div className="flex items-center gap-4 mb-6 pb-6 border-b border-slate-100">
                     <div className="h-14 w-14 rounded-full bg-brand-50 flex items-center justify-center text-brand-600 font-bold text-xl border border-brand-100">
-                      {user?.name.charAt(0)}
+                      {user?.name?.charAt(0) || '?'}
                     </div>
                     <div>
                       <p className="text-lg font-bold text-slate-900">{user?.name}</p>

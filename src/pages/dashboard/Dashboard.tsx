@@ -118,6 +118,8 @@ export const Dashboard = () => {
 
   const lowStockCount = (products || []).filter(p => p.stock <= 5).length;
   const avgOrderValue = stats ? (stats.totalRevenue / (stats.totalSalesCount || 1)) : 0;
+  const chartData = (stats?.dailySales || []).map(d => ({ ...d, total: (d.cash || 0) + (d.debt || 0) }));
+  const topProductsData = stats?.topProducts || [];
 
   const COLORS = ['#3354ff', '#10b981', '#f59e0b', '#f43f5e', '#8b5cf6', '#06b6d4'];
 
@@ -188,7 +190,7 @@ export const Dashboard = () => {
           </div>
           <div className="h-[250px] sm:h-[350px]">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={stats.dailySales.map(d => ({ ...d, total: d.cash + d.debt }))}>
+              <AreaChart data={chartData}>
                 <defs>
                   <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#3354ff" stopOpacity={0.15}/>
@@ -254,7 +256,7 @@ export const Dashboard = () => {
           <p className="text-xs lg:text-sm text-slate-400 font-medium mb-6 lg:mb-8">Most popular items by volume</p>
           <div className="h-[250px] sm:h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={stats.topProducts} layout="vertical" margin={{ left: 0, right: 20 }}>
+              <BarChart data={topProductsData} layout="vertical" margin={{ left: 0, right: 20 }}>
                 <XAxis type="number" hide />
                 <YAxis 
                   dataKey="name" 
@@ -269,7 +271,7 @@ export const Dashboard = () => {
                   contentStyle={{ borderRadius: '20px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                 />
                 <Bar dataKey="totalSold" radius={[0, 12, 12, 0]} barSize={20}>
-                  {stats.topProducts.map((entry, index) => (
+                  {topProductsData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Bar>

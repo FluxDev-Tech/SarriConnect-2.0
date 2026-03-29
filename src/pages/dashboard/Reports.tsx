@@ -39,11 +39,11 @@ export const Reports = () => {
           <p className="text-gray-500">Detailed breakdown of your store's financial health</p>
         </div>
         <div className="flex gap-3">
-          <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-100 rounded-2xl text-sm font-bold text-gray-600 shadow-sm hover:bg-gray-50 transition-all">
+          <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-100 rounded-none text-sm font-bold text-gray-600 shadow-sm hover:bg-gray-50 transition-all">
             <Calendar className="h-4 w-4" />
             Select Range
           </button>
-          <button className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 rounded-2xl text-sm font-bold text-white shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all">
+          <button className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 rounded-none text-sm font-bold text-white shadow-lg shadow-indigo-100 hover:bg-indigo-700 transition-all">
             <Download className="h-4 w-4" />
             Export PDF
           </button>
@@ -51,9 +51,9 @@ export const Reports = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+        <div className="bg-white p-6 rounded-none border border-gray-100 shadow-sm">
           <div className="flex items-center gap-4 mb-4">
-            <div className="p-3 bg-indigo-50 rounded-2xl">
+            <div className="p-3 bg-indigo-50 rounded-none">
               <TrendingUp className="h-6 w-6 text-indigo-600" />
             </div>
             <div>
@@ -69,9 +69,9 @@ export const Reports = () => {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+        <div className="bg-white p-6 rounded-none border border-gray-100 shadow-sm">
           <div className="flex items-center gap-4 mb-4">
-            <div className="p-3 bg-emerald-50 rounded-2xl">
+            <div className="p-3 bg-emerald-50 rounded-none">
               <Package className="h-6 w-6 text-emerald-600" />
             </div>
             <div>
@@ -87,9 +87,9 @@ export const Reports = () => {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-3xl border border-gray-100 shadow-sm">
+        <div className="bg-white p-6 rounded-none border border-gray-100 shadow-sm">
           <div className="flex items-center gap-4 mb-4">
-            <div className="p-3 bg-amber-50 rounded-2xl">
+            <div className="p-3 bg-amber-50 rounded-none">
               <Receipt className="h-6 w-6 text-amber-600" />
             </div>
             <div>
@@ -104,7 +104,7 @@ export const Reports = () => {
         </div>
       </div>
 
-      <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white rounded-none shadow-sm border border-gray-100 overflow-hidden">
         <div className="px-8 py-6 border-b border-gray-100 flex items-center justify-between">
           <h3 className="text-lg font-bold text-gray-900">Recent Transactions</h3>
           <button className="text-indigo-600 text-sm font-bold hover:underline">View All</button>
@@ -137,7 +137,7 @@ export const Reports = () => {
                     {formatCurrency(sale.totalPrice)}
                   </td>
                   <td className="px-8 py-4 text-right">
-                    <span className="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-xs font-bold uppercase tracking-wide">
+                    <span className="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-none text-xs font-bold uppercase tracking-wide">
                       Completed
                     </span>
                   </td>

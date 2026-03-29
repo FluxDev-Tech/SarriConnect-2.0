@@ -37,24 +37,12 @@ export const Login = () => {
     setIsLoading(true);
     setError(null);
     try {
-      // Simple client-side success for the "original" credentials to ensure "no error"
-      if (data.email === 'admin@store.com' && data.password === 'admin123') {
-        const user = { id: 999, name: "Admin User", email: "admin@store.com", role: "admin" as const };
-        setAuth(user, 'fake-token-for-simplicity');
-        navigate('/');
-        return;
-      }
-
-      // Fallback to API call for other cases
       const res = await api.post('/auth/login', data);
       setAuth(res.data.user, res.data.token);
       navigate('/');
     } catch (err: any) {
-      // Even if API fails, let's just log them in as a guest to be "simple" and "no error"
-      console.error("Login Error (ignored for simplicity):", err);
-      const guestUser = { id: 1, name: "Staff User", email: data.email, role: "staff" as const };
-      setAuth(guestUser, 'guest-token');
-      navigate('/');
+      setError(err.response?.data?.message || 'Invalid email or password');
+      console.error("Login Error:", err);
     } finally {
       setIsLoading(false);
     }
@@ -70,7 +58,7 @@ export const Login = () => {
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
-        className="relative w-full max-w-[420px] bg-white rounded-xl shadow-2xl overflow-hidden pt-12 pb-16 px-10 flex flex-col items-center z-10 mx-4"
+        className="relative w-full max-w-[420px] bg-white rounded-none shadow-2xl overflow-hidden pt-12 pb-16 px-10 flex flex-col items-center z-10 mx-4"
       >
         {/* Logo Section */}
         <div className="mb-10">
@@ -93,7 +81,7 @@ export const Login = () => {
             <motion.div 
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="w-full p-3 bg-rose-50 border border-rose-100 text-rose-600 text-[11px] rounded-lg font-bold text-center mb-6"
+              className="w-full p-3 bg-rose-50 border border-rose-100 text-rose-600 text-[11px] rounded-none font-bold text-center mb-6"
             >
               {error}
             </motion.div>
@@ -106,7 +94,7 @@ export const Login = () => {
                 {...register('email')}
                 type="email"
                 placeholder="Admin Email ID"
-                className="w-full bg-[#e9ecef] rounded-xl px-6 py-4 text-slate-700 font-bold placeholder:text-slate-400 outline-none transition-all border-none focus:ring-2 focus:ring-[#f39c12]/20"
+                className="w-full bg-[#e9ecef] rounded-none px-6 py-4 text-slate-700 font-bold placeholder:text-slate-400 outline-none transition-all border-none focus:ring-2 focus:ring-[#f39c12]/20"
               />
               {errors.email && (
                 <p className="mt-1 text-[9px] text-rose-500 font-bold uppercase tracking-wider pl-2">
@@ -121,7 +109,7 @@ export const Login = () => {
                 {...register('password')}
                 type="password"
                 placeholder="Password"
-                className="w-full bg-[#e9ecef] rounded-xl px-6 py-4 text-slate-700 font-bold placeholder:text-slate-400 outline-none transition-all border-none focus:ring-2 focus:ring-[#f39c12]/20"
+                className="w-full bg-[#e9ecef] rounded-none px-6 py-4 text-slate-700 font-bold placeholder:text-slate-400 outline-none transition-all border-none focus:ring-2 focus:ring-[#f39c12]/20"
               />
               {errors.password && (
                 <p className="mt-1 text-[9px] text-rose-500 font-bold uppercase tracking-wider pl-2">
@@ -135,7 +123,7 @@ export const Login = () => {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-[85%] bg-[#fdf0d5] hover:bg-[#fae1b0] text-black font-black text-lg py-3.5 rounded-xl transition-all active:scale-[0.98] shadow-sm disabled:opacity-70 flex items-center justify-center mb-6"
+            className="w-[85%] bg-[#fdf0d5] hover:bg-[#fae1b0] text-black font-black text-lg py-3.5 rounded-none transition-all active:scale-[0.98] shadow-sm disabled:opacity-70 flex items-center justify-center mb-6"
           >
             {isLoading ? (
               <Loader2 className="h-5 w-5 animate-spin" />

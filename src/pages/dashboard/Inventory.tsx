@@ -24,6 +24,10 @@ export const Inventory = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
   const [productToDelete, setProductToDelete] = React.useState<any>(null);
 
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = React.useState(false);
+  const [productToUpdate, setProductToUpdate] = React.useState<any>(null);
+  const [newStock, setNewStock] = React.useState<string>('');
+
   React.useEffect(() => {
     fetchProducts();
   }, [fetchProducts]);
@@ -33,11 +37,25 @@ export const Inventory = () => {
     setIsDeleteModalOpen(true);
   };
 
+  const handleUpdateClick = (product: any) => {
+    setProductToUpdate(product);
+    setNewStock(product.stock.toString());
+    setIsUpdateModalOpen(true);
+  };
+
   const confirmDelete = async () => {
     if (productToDelete) {
       await deleteProduct(productToDelete.id);
       setIsDeleteModalOpen(false);
       setProductToDelete(null);
+    }
+  };
+
+  const confirmUpdate = async () => {
+    if (productToUpdate && newStock !== '') {
+      await useStore.getState().updateProduct(productToUpdate.id, { stock: parseInt(newStock) });
+      setIsUpdateModalOpen(false);
+      setProductToUpdate(null);
     }
   };
 
@@ -58,11 +76,11 @@ export const Inventory = () => {
           <p className="text-slate-500 font-medium mt-1 text-sm lg:text-base">Monitor and manage your stock levels</p>
         </div>
         <div className="flex flex-wrap gap-3">
-          <div className="bg-amber-50 px-4 py-2 rounded-2xl border border-amber-100 flex items-center gap-2 shadow-sm">
+          <div className="bg-amber-50 px-4 py-2 rounded-none border border-amber-100 flex items-center gap-2 shadow-sm">
             <AlertTriangle className="h-4 w-4 text-amber-500" />
             <span className="text-xs lg:text-sm font-bold text-amber-700">{lowStockCount} Low Stock</span>
           </div>
-          <div className="bg-rose-50 px-4 py-2 rounded-2xl border border-rose-100 flex items-center gap-2 shadow-sm">
+          <div className="bg-rose-50 px-4 py-2 rounded-none border border-rose-100 flex items-center gap-2 shadow-sm">
             <Package className="h-4 w-4 text-rose-500" />
             <span className="text-xs lg:text-sm font-bold text-rose-700">{outOfStockCount} Out of Stock</span>
           </div>
@@ -75,7 +93,7 @@ export const Inventory = () => {
           <input
             type="text"
             placeholder="Search products to check stock..."
-            className="w-full pl-12 pr-4 py-3 lg:py-4 rounded-2xl border border-slate-100 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all font-medium text-sm lg:text-base"
+            className="w-full pl-12 pr-4 py-3 lg:py-4 rounded-none border border-slate-100 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-brand-500 transition-all font-medium text-sm lg:text-base"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -83,7 +101,7 @@ export const Inventory = () => {
       </div>
 
       {/* Desktop Table View */}
-      <div className="hidden md:block bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
+      <div className="hidden md:block bg-white rounded-none shadow-sm border border-slate-100 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -101,9 +119,9 @@ export const Inventory = () => {
                   <td className="px-8 py-5">
                     <div className="flex items-center gap-4">
                       {product.imageUrl ? (
-                        <img src={product.imageUrl} className="h-12 w-12 rounded-xl object-cover border border-slate-100" alt="" referrerPolicy="no-referrer" />
+                        <img src={product.imageUrl} className="h-12 w-12 rounded-none object-cover border border-slate-100" alt="" referrerPolicy="no-referrer" />
                       ) : (
-                        <div className="h-12 w-12 rounded-xl bg-slate-100 flex items-center justify-center text-slate-300">
+                        <div className="h-12 w-12 rounded-none bg-slate-100 flex items-center justify-center text-slate-300">
                           <Package className="h-6 w-6" />
                         </div>
                       )}
@@ -114,7 +132,7 @@ export const Inventory = () => {
                     </div>
                   </td>
                   <td className="px-8 py-5">
-                    <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-lg text-[10px] font-bold uppercase tracking-wider">
+                    <span className="px-3 py-1 bg-slate-100 text-slate-600 rounded-none text-[10px] font-bold uppercase tracking-wider">
                       {product.category}
                     </span>
                   </td>
@@ -128,15 +146,15 @@ export const Inventory = () => {
                   </td>
                   <td className="px-8 py-5 text-right">
                     {product.stock > 5 ? (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase rounded-lg">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 text-[10px] font-black uppercase rounded-none">
                         Good
                       </span>
                     ) : product.stock > 0 ? (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-600 text-[10px] font-black uppercase rounded-lg">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-600 text-[10px] font-black uppercase rounded-none">
                         Low Stock
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-rose-50 text-rose-600 text-[10px] font-black uppercase rounded-lg">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-rose-50 text-rose-600 text-[10px] font-black uppercase rounded-none">
                         Out of Stock
                       </span>
                     )}
@@ -144,8 +162,15 @@ export const Inventory = () => {
                   <td className="px-8 py-5 text-right">
                     <div className="flex items-center justify-end gap-2">
                       <button 
+                        onClick={() => handleUpdateClick(product)} 
+                        className="p-2.5 bg-brand-50 text-brand-600 hover:bg-brand-600 hover:text-white rounded-none transition-all"
+                        title="Update Stock"
+                      >
+                        <Plus className="h-4 w-4" />
+                      </button>
+                      <button 
                         onClick={() => handleDeleteClick(product)} 
-                        className="p-2.5 bg-slate-50 text-rose-600 hover:bg-rose-600 hover:text-white rounded-xl transition-all"
+                        className="p-2.5 bg-slate-50 text-rose-600 hover:bg-rose-600 hover:text-white rounded-none transition-all"
                         title="Delete Product"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -162,30 +187,30 @@ export const Inventory = () => {
       {/* Mobile Card View */}
       <div className="md:hidden space-y-4">
         {filteredProducts.map((product) => (
-          <div key={product.id} className="bento-card p-4 flex items-center gap-4">
-            <div className="h-16 w-16 rounded-xl bg-slate-100 flex items-center justify-center text-slate-300 overflow-hidden shrink-0">
+          <div key={product.id} className="bento-card p-4 flex items-center gap-4 rounded-none">
+            <div className="h-16 w-16 rounded-none bg-slate-100 flex items-center justify-center text-slate-300 overflow-hidden shrink-0">
               {product.imageUrl ? <img src={product.imageUrl} className="w-full h-full object-cover" referrerPolicy="no-referrer" /> : <Package className="h-8 w-8" />}
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between gap-2">
                 <h3 className="font-bold text-slate-900 truncate">{product.name}</h3>
                 {product.stock > 5 ? (
-                  <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[9px] font-black uppercase rounded-md shrink-0">
+                  <span className="px-2 py-0.5 bg-emerald-50 text-emerald-600 text-[9px] font-black uppercase rounded-none shrink-0">
                     Good
                   </span>
                 ) : product.stock > 0 ? (
-                  <span className="px-2 py-0.5 bg-amber-50 text-amber-600 text-[9px] font-black uppercase rounded-md shrink-0">
+                  <span className="px-2 py-0.5 bg-amber-50 text-amber-600 text-[9px] font-black uppercase rounded-none shrink-0">
                     Low
                   </span>
                 ) : (
-                  <span className="px-2 py-0.5 bg-rose-50 text-rose-600 text-[9px] font-black uppercase rounded-md shrink-0">
+                  <span className="px-2 py-0.5 bg-rose-50 text-rose-600 text-[9px] font-black uppercase rounded-none shrink-0">
                     Out
                   </span>
                 )}
               </div>
               <p className="text-[10px] text-slate-400 font-medium mb-2">{product.barcode || 'No barcode'}</p>
               <div className="flex items-center justify-between">
-                <span className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-md text-[9px] font-bold uppercase tracking-wider">
+                <span className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded-none text-[9px] font-bold uppercase tracking-wider">
                   {product.category}
                 </span>
                 <p className={cn(
@@ -196,8 +221,14 @@ export const Inventory = () => {
             </div>
             <div className="flex flex-col gap-2">
               <button 
+                onClick={() => handleUpdateClick(product)} 
+                className="p-2 bg-brand-50 text-brand-600 rounded-none"
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+              <button 
                 onClick={() => handleDeleteClick(product)} 
-                className="p-2 bg-slate-50 text-rose-600 rounded-lg"
+                className="p-2 bg-slate-50 text-rose-600 rounded-none"
               >
                 <Trash2 className="h-4 w-4" />
               </button>
@@ -212,8 +243,8 @@ export const Inventory = () => {
         title="Confirm Deletion"
       >
         <div className="space-y-8">
-          <div className="flex items-center gap-6 p-6 bg-rose-50 rounded-2xl text-rose-700 border border-rose-100">
-            <div className="bg-rose-100 p-3 rounded-2xl">
+          <div className="flex items-center gap-6 p-6 bg-rose-50 rounded-none text-rose-700 border border-rose-100">
+            <div className="bg-rose-100 p-3 rounded-none">
               <AlertTriangle className="h-8 w-8" />
             </div>
             <div>
@@ -226,14 +257,50 @@ export const Inventory = () => {
             You are about to delete <span className="font-black text-slate-900 underline decoration-rose-500 decoration-2 underline-offset-4">{productToDelete?.name}</span>. 
             This will permanently remove the product from your inventory.
           </p>
-
+ 
           <div className="flex gap-4 pt-2">
-            <Button variant="secondary" className="flex-1 h-14 rounded-2xl font-bold" onClick={() => setIsDeleteModalOpen(false)}>
+            <Button variant="secondary" className="flex-1 h-14 rounded-none font-bold" onClick={() => setIsDeleteModalOpen(false)}>
               Cancel
             </Button>
-            <Button variant="secondary" className="flex-1 h-14 rounded-2xl font-bold bg-rose-600 text-white hover:bg-rose-700 border-none shadow-xl shadow-rose-200/50" onClick={confirmDelete} isLoading={isLoading}>
+            <Button variant="secondary" className="flex-1 h-14 rounded-none font-bold bg-rose-600 text-white hover:bg-rose-700 border-none shadow-xl shadow-rose-200/50" onClick={confirmDelete} isLoading={isLoading}>
               Delete Product
             </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Update Stock Modal */}
+      <Modal
+        isOpen={isUpdateModalOpen}
+        onClose={() => setIsUpdateModalOpen(false)}
+        title="Update Stock Level"
+      >
+        <div className="space-y-6">
+          <div className="flex items-center gap-4 p-4 bg-slate-50 rounded-none border border-slate-100">
+            <div className="h-16 w-16 rounded-none bg-white flex items-center justify-center text-slate-300 overflow-hidden border border-slate-100">
+              {productToUpdate?.imageUrl ? <img src={productToUpdate.imageUrl} className="w-full h-full object-cover" referrerPolicy="no-referrer" /> : <Package className="h-8 w-8" />}
+            </div>
+            <div>
+              <h3 className="font-black text-slate-900">{productToUpdate?.name}</h3>
+              <p className="text-xs text-slate-500 font-medium">Current Stock: <span className="font-black text-slate-900">{productToUpdate?.stock}</span></p>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">New Stock Quantity</label>
+            <Input
+              type="number"
+              value={newStock}
+              onChange={(e) => setNewStock(e.target.value)}
+              placeholder="Enter new stock amount..."
+              className="h-14 rounded-none text-lg font-black"
+              autoFocus
+            />
+          </div>
+
+          <div className="flex gap-3">
+            <Button variant="secondary" className="flex-1 rounded-none h-12 font-bold" onClick={() => setIsUpdateModalOpen(false)}>Cancel</Button>
+            <Button className="flex-1 rounded-none h-12 font-bold bg-brand-600 hover:bg-brand-700" onClick={confirmUpdate}>Update Stock</Button>
           </div>
         </div>
       </Modal>

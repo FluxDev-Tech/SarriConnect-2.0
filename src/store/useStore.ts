@@ -20,8 +20,9 @@ interface AppState {
   addProduct: (product: Omit<Product, 'id' | 'createdAt'>) => Promise<void>;
   updateProduct: (id: number, product: Partial<Product>) => Promise<void>;
   deleteProduct: (id: number) => Promise<void>;
-  recordSale: (items: { id: number; quantity: number; price: number }[], totalPrice: number, subtotal: number, discount: number, paymentType?: 'cash' | 'debt', customerName?: string) => Promise<void>;
+  recordSale: (items: { id: number; quantity: number; price: number }[], totalPrice: number, subtotal: number, discount: number, paymentType?: 'cash' | 'debt', customerName?: string, customerAddress?: string, customerPhone?: string, receivedAmount?: number, change?: number) => Promise<void>;
   markAsPaid: (saleId: number) => Promise<void>;
+  resetApp: () => Promise<void>;
 }
 
 const getInitialToken = () => {
@@ -108,8 +109,8 @@ export const useStore = create<AppState>((set, get) => ({
     get().fetchProducts();
   },
 
-  recordSale: async (items, totalPrice, subtotal, discount, paymentType = 'cash', customerName) => {
-    await api.post('/sales', { items, totalPrice, subtotal, discount, paymentType, customerName });
+  recordSale: async (items, totalPrice, subtotal, discount, paymentType = 'cash', customerName, customerAddress, customerPhone, receivedAmount, change) => {
+    await api.post('/sales', { items, totalPrice, subtotal, discount, paymentType, customerName, customerAddress, customerPhone, receivedAmount, change });
     get().fetchProducts();
     get().fetchStats();
   },
@@ -117,5 +118,12 @@ export const useStore = create<AppState>((set, get) => ({
   markAsPaid: async (saleId) => {
     await api.put(`/sales/${saleId}/pay`);
     get().fetchStats();
+  },
+
+  resetApp: async () => {
+    await api.post('/reset');
+    get().fetchProducts();
+    get().fetchStats();
+    get().fetchReceiptSettings();
   },
 }));

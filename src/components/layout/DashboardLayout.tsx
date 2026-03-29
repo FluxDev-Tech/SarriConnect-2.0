@@ -18,7 +18,8 @@ import {
   Search,
   Settings,
   User,
-  Plus
+  Plus,
+  Trash2
 } from 'lucide-react';
 import { useStore } from '../../store/useStore';
 import { cn } from '../../utils/helpers';
@@ -36,7 +37,7 @@ const SidebarItem: React.FC<{
     to={to}
     onClick={onClick}
     className={cn(
-      "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group relative mx-2",
+      "flex items-center gap-3 px-4 py-3 rounded-none transition-all duration-200 group relative",
       active 
         ? "bg-brand-50 text-brand-600" 
         : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
@@ -46,11 +47,11 @@ const SidebarItem: React.FC<{
     {!collapsed && <span className={cn("text-sm whitespace-nowrap", active ? "font-bold" : "font-medium")}>{label}</span>}
     
     {active && !collapsed && (
-      <div className="absolute left-0 w-1 h-6 bg-brand-500 rounded-r-full" />
+      <div className="absolute left-0 w-1 h-full bg-brand-500 rounded-none" />
     )}
     
     {collapsed && (
-      <div className="absolute left-full ml-4 px-2 py-1 bg-slate-900 text-white text-[10px] font-bold rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
+      <div className="absolute left-full ml-4 px-2 py-1 bg-slate-900 text-white text-[10px] font-bold rounded-none opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 whitespace-nowrap">
         {label}
       </div>
     )}
@@ -93,7 +94,7 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
         )}
       >
         <div className={cn("flex items-center gap-3 h-20 border-b border-slate-100", isCollapsed ? "justify-center" : "px-6")}>
-          <div className="bg-brand-500 p-1.5 rounded-lg shrink-0">
+          <div className="bg-brand-500 p-1.5 rounded-none shrink-0">
             <Store className="h-6 w-6 text-white" />
           </div>
           {!isCollapsed && (
@@ -124,7 +125,7 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
           <button
             onClick={handleLogout}
             className={cn(
-              "flex items-center gap-3 w-full py-3 text-slate-500 hover:bg-slate-50 hover:text-slate-900 rounded-xl transition-all duration-200 group",
+              "flex items-center gap-3 w-full py-3 text-slate-500 hover:bg-slate-50 hover:text-slate-900 rounded-none transition-all duration-200 group",
               isCollapsed ? "justify-center" : "px-4"
             )}
           >
@@ -141,7 +142,7 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
           <div className="flex items-center gap-4">
             <button 
               onClick={toggleSidebar}
-              className="p-2 hover:bg-slate-50 rounded-lg transition-colors lg:flex hidden"
+              className="p-2 hover:bg-slate-50 rounded-none transition-colors lg:flex hidden"
             >
               <Menu className="h-5 w-5 text-slate-500" />
             </button>
@@ -151,7 +152,7 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="hidden md:flex items-center bg-slate-100 rounded-full px-4 py-2 w-64 focus-within:ring-2 focus-within:ring-brand-500/20 transition-all">
+            <div className="hidden md:flex items-center bg-slate-100 rounded-none px-4 py-2 w-64 focus-within:ring-2 focus-within:ring-brand-500/20 transition-all">
               <Search className="h-4 w-4 text-slate-400 mr-2" />
               <input 
                 type="text" 
@@ -165,7 +166,7 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
                 <p className="text-sm font-bold text-slate-900">{user?.name}</p>
                 <p className="text-[10px] text-brand-500 font-bold uppercase tracking-wider">{user?.role}</p>
               </div>
-              <div className="h-10 w-10 rounded-full bg-brand-50 flex items-center justify-center text-brand-600 font-bold border border-brand-100">
+              <div className="h-10 w-10 rounded-none bg-brand-50 flex items-center justify-center text-brand-600 font-bold border border-brand-100">
                 {user?.name?.charAt(0) || '?'}
               </div>
             </div>
@@ -243,10 +244,10 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
                   initial={{ opacity: 0, y: 100 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: 100 }}
-                  className="absolute bottom-full left-0 right-0 bg-white rounded-t-3xl shadow-2xl p-6 border-t border-slate-100"
+                  className="absolute bottom-full left-0 right-0 bg-white rounded-none shadow-2xl p-6 border-t border-slate-100"
                 >
                   <div className="flex items-center gap-4 mb-6 pb-6 border-b border-slate-100">
-                    <div className="h-14 w-14 rounded-full bg-brand-50 flex items-center justify-center text-brand-600 font-bold text-xl border border-brand-100">
+                    <div className="h-14 w-14 rounded-none bg-brand-50 flex items-center justify-center text-brand-600 font-bold text-xl border border-brand-100">
                       {user?.name?.charAt(0) || '?'}
                     </div>
                     <div>
@@ -259,14 +260,14 @@ export const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ child
                     <Link 
                       to="/scanner" 
                       onClick={() => setIsSettingsOpen(false)}
-                      className="flex flex-col items-center gap-2 p-4 bg-slate-50 rounded-2xl hover:bg-brand-50 transition-colors group"
+                      className="flex flex-col items-center gap-2 p-4 bg-slate-50 rounded-none hover:bg-brand-50 transition-colors group"
                     >
                       <Scan className="h-6 w-6 text-slate-500 group-hover:text-brand-500" />
                       <span className="text-xs font-bold text-slate-700">Scanner</span>
                     </Link>
                     <button
                       onClick={handleLogout}
-                      className="flex flex-col items-center gap-2 p-4 bg-rose-50 rounded-2xl hover:bg-rose-100 transition-colors group"
+                      className="flex flex-col items-center gap-2 p-4 bg-rose-50 rounded-none hover:bg-rose-100 transition-colors group"
                     >
                       <LogOut className="h-6 w-6 text-rose-500" />
                       <span className="text-xs font-bold text-rose-700">Logout</span>

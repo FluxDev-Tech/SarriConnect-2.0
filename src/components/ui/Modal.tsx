@@ -26,15 +26,17 @@ export const Modal: React.FC<ModalProps> = ({ isOpen, onClose, title, children }
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl modal-content"
+            className="relative w-full max-w-lg overflow-hidden rounded-none bg-white shadow-2xl modal-content flex flex-col max-h-[90vh]"
           >
-            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4 no-print">
+            <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4 no-print shrink-0">
               <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
-              <Button variant="ghost" size="sm" onClick={onClose} className="rounded-full p-1 h-8 w-8">
+              <Button variant="ghost" size="sm" onClick={onClose} className="rounded-none p-1 h-8 w-8">
                 <X className="h-5 w-5" />
               </Button>
             </div>
-            <div className="px-6 py-6 print-no-padding">{children}</div>
+            <div className="px-4 sm:px-6 py-6 overflow-y-auto print-no-padding flex-1">
+              {children}
+            </div>
           </motion.div>
         </div>
       )}

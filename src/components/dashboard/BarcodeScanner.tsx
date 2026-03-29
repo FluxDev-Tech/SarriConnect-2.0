@@ -181,12 +181,12 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, onClose,
     )}>
       <div className={cn(
         "bg-white overflow-hidden relative border border-slate-100",
-        isModal ? "rounded-3xl shadow-2xl w-full max-w-lg border-white/20" : "rounded-2xl w-full"
+        isModal ? "rounded-none shadow-2xl w-full max-w-lg border-white/20" : "rounded-none w-full"
       )}>
         {/* Header */}
         <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-white">
           <div className="flex items-center gap-3">
-            <div className="bg-brand-50 p-2 rounded-lg">
+            <div className="bg-brand-50 p-2 rounded-none">
               <Scan className="h-5 w-5 text-brand-600" />
             </div>
             <div>
@@ -199,7 +199,7 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, onClose,
           <div className="flex items-center gap-1">
             <button 
               onClick={toggleCamera}
-              className="p-2 hover:bg-slate-50 rounded-lg transition-all text-slate-400 hover:text-brand-600"
+              className="p-2 hover:bg-slate-50 rounded-none transition-all text-slate-400 hover:text-brand-600"
               title="Switch Camera"
             >
               <RefreshCw className="h-4 w-4" />
@@ -207,7 +207,7 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, onClose,
             {onClose && (
               <button 
                 onClick={onClose}
-                className="p-2 hover:bg-slate-50 rounded-lg transition-all text-slate-400 hover:text-rose-500"
+                className="p-2 hover:bg-slate-50 rounded-none transition-all text-slate-400 hover:text-rose-500"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -218,7 +218,7 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, onClose,
         <div className="p-4 lg:p-6 space-y-6">
           {/* Scanner Viewport */}
           <div className="relative">
-            <div id="reader" className="overflow-hidden rounded-2xl border-2 border-slate-100 bg-black aspect-square md:aspect-video relative z-10"></div>
+            <div id="reader" className="overflow-hidden rounded-none border-2 border-slate-100 bg-black aspect-square md:aspect-video relative z-10"></div>
             
             {/* Flash Overlay */}
             <AnimatePresence>
@@ -227,28 +227,28 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, onClose,
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="absolute inset-0 bg-white z-20 pointer-events-none rounded-2xl"
+                  className="absolute inset-0 bg-white z-20 pointer-events-none rounded-none"
                 />
               )}
             </AnimatePresence>
 
             {!isScannerReady && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-50 rounded-2xl z-20">
-                <div className="w-8 h-8 border-3 border-brand-500 border-t-transparent rounded-full animate-spin mb-3" />
+              <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-50 rounded-none z-20">
+                <div className="w-8 h-8 border-3 border-brand-500 border-t-transparent rounded-none animate-spin mb-3" />
                 <p className="text-slate-400 font-bold uppercase tracking-widest text-[9px]">Starting Camera...</p>
               </div>
             )}
 
             {/* Laser Animation Overlay */}
             <div className="absolute inset-0 pointer-events-none flex items-center justify-center z-20">
-              <div className="w-[90%] h-0.5 bg-brand-500/50 animate-scan-line rounded-full" />
+              <div className="w-[90%] h-0.5 bg-brand-500/50 animate-scan-line rounded-none" />
             </div>
 
             {/* Corner Accents */}
-            <div className="absolute top-4 left-4 w-8 h-8 border-t-2 border-l-2 border-brand-500/30 rounded-tl-xl z-20" />
-            <div className="absolute top-4 right-4 w-8 h-8 border-t-2 border-r-2 border-brand-500/30 rounded-tr-xl z-20" />
-            <div className="absolute bottom-4 left-4 w-8 h-8 border-b-2 border-l-2 border-brand-500/30 rounded-bl-xl z-20" />
-            <div className="absolute bottom-4 right-4 w-8 h-8 border-b-2 border-r-2 border-brand-500/30 rounded-br-xl z-20" />
+            <div className="absolute top-4 left-4 w-8 h-8 border-t-2 border-l-2 border-brand-500/30 rounded-none z-20" />
+            <div className="absolute top-4 right-4 w-8 h-8 border-t-2 border-r-2 border-brand-500/30 rounded-none z-20" />
+            <div className="absolute bottom-4 left-4 w-8 h-8 border-b-2 border-l-2 border-brand-500/30 rounded-none z-20" />
+            <div className="absolute bottom-4 right-4 w-8 h-8 border-b-2 border-r-2 border-brand-500/30 rounded-none z-20" />
           </div>
 
           {/* Feedback Area */}
@@ -260,9 +260,9 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, onClose,
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="p-4 bg-emerald-50 rounded-xl border border-emerald-100 flex items-center gap-4"
+                  className="p-4 bg-emerald-50 rounded-none border border-emerald-100 flex items-center gap-4"
                 >
-                  <div className="bg-emerald-500 p-2.5 rounded-lg">
+                  <div className="bg-emerald-500 p-2.5 rounded-none">
                     <CheckCircle2 className="h-5 w-5 text-white" />
                   </div>
                   <div className="flex-1">
@@ -273,7 +273,7 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, onClose,
                     </div>
                   </div>
                   {isProcessing && (
-                    <div className="w-5 h-5 border-2 border-brand-600 border-t-transparent rounded-full animate-spin" />
+                    <div className="w-5 h-5 border-2 border-brand-600 border-t-transparent rounded-none animate-spin" />
                   )}
                 </motion.div>
               ) : error ? (
@@ -282,9 +282,9 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, onClose,
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -10 }}
-                  className="p-4 bg-rose-50 rounded-xl border border-rose-100 flex items-center gap-4"
+                  className="p-4 bg-rose-50 rounded-none border border-rose-100 flex items-center gap-4"
                 >
-                  <div className="bg-rose-500 p-2.5 rounded-lg">
+                  <div className="bg-rose-500 p-2.5 rounded-none">
                     <AlertCircle className="h-5 w-5 text-white" />
                   </div>
                   <div className="flex-1">
@@ -293,7 +293,7 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, onClose,
                   </div>
                   <button 
                     onClick={() => setError(null)}
-                    className="p-1.5 hover:bg-rose-100 rounded-lg text-rose-400 transition-colors"
+                    className="p-1.5 hover:bg-rose-100 rounded-none text-rose-400 transition-colors"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -311,7 +311,7 @@ export const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, onClose,
                       <input 
                         type="text"
                         placeholder="Enter barcode..."
-                        className="w-full h-12 pl-10 pr-4 bg-slate-50 border border-slate-200 focus:border-brand-500 focus:bg-white rounded-xl outline-none transition-all font-bold text-slate-900 text-sm placeholder:text-slate-300"
+                        className="w-full h-12 pl-10 pr-4 bg-slate-50 border border-slate-200 focus:border-brand-500 focus:bg-white rounded-none outline-none transition-all font-bold text-slate-900 text-sm placeholder:text-slate-300"
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
                             const val = (e.target as HTMLInputElement).value;

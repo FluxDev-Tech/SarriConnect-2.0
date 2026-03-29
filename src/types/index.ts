@@ -23,8 +23,13 @@ export interface Sale {
   discount: number;
   paymentType: 'cash' | 'debt';
   customerName?: string;
+  customerAddress?: string;
+  customerPhone?: string;
+  isPaid?: boolean;
+  receivedAmount?: number;
+  change?: number;
   createdAt: string;
-  items?: string;
+  items?: any; // Changed to any to handle both string and array
 }
 
 export interface DashboardStats {
@@ -33,6 +38,7 @@ export interface DashboardStats {
   debtRevenue: number;
   totalProducts: number;
   totalSalesCount: number;
+  totalDebts?: number;
   dailySales: { date: string; cash: number; debt: number }[];
   topProducts: { name: string; totalSold: number }[];
 }

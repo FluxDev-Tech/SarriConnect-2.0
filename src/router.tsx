@@ -7,7 +7,7 @@ import { Dashboard } from './pages/dashboard/Dashboard';
 import { Products } from './pages/dashboard/Products';
 import { Inventory } from './pages/dashboard/Inventory';
 import { POS } from './pages/dashboard/POS';
-import { SalesHistory } from './pages/dashboard/Sales';
+import { Sales } from './pages/dashboard/Sales';
 import { Debts } from './pages/dashboard/Debts';
 import { Scanner } from './pages/dashboard/Scanner';
 
@@ -29,7 +29,7 @@ export const AppRouter = () => {
       
       <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/pos" element={<ProtectedRoute><POS /></ProtectedRoute>} />
-      <Route path="/sales" element={<ProtectedRoute><SalesHistory /></ProtectedRoute>} />
+      <Route path="/sales" element={<ProtectedRoute><Sales /></ProtectedRoute>} />
       <Route path="/products" element={<ProtectedRoute><Products /></ProtectedRoute>} />
       <Route path="/inventory" element={<ProtectedRoute><Inventory /></ProtectedRoute>} />
       <Route path="/debts" element={<ProtectedRoute><Debts /></ProtectedRoute>} />

@@ -70,7 +70,7 @@ export const Scanner = () => {
     
     const items = [{ id: product.id, quantity: 1, price: product.price }];
     try {
-      await recordSale(items, product.price, product.price, 0, 'cash', 'Quick Scan Sale');
+      await recordSale(items, product.price, product.price, 0, 'cash', 'Quick Scan Sale', undefined, undefined, product.price, 0);
       setScanHistory(prev => [{ 
         id: Math.random().toString(36).substr(2, 9),
         product, 
@@ -91,9 +91,9 @@ export const Scanner = () => {
   return (
     <div className="max-w-7xl mx-auto space-y-6 lg:space-y-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-none border border-slate-100 shadow-sm">
         <div className="flex items-center gap-4">
-          <div className="bg-brand-600 p-3 rounded-xl shadow-lg shadow-brand-100">
+          <div className="bg-brand-600 p-3 rounded-none shadow-lg shadow-brand-100">
             <Scan className="h-6 w-6 text-white" />
           </div>
           <div>
@@ -102,11 +102,11 @@ export const Scanner = () => {
           </div>
         </div>
         
-        <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-xl border border-slate-100">
+        <div className="flex items-center gap-2 bg-slate-50 p-1 rounded-none border border-slate-100">
           <button 
             onClick={() => setAutoDeduct(true)}
             className={cn(
-              "px-4 py-2 rounded-lg text-[10px] font-black transition-all tracking-widest",
+              "px-4 py-2 rounded-none text-[10px] font-black transition-all tracking-widest",
               autoDeduct ? "bg-white text-brand-600 shadow-sm border border-slate-100" : "text-slate-400 hover:text-slate-600"
             )}
           >
@@ -115,7 +115,7 @@ export const Scanner = () => {
           <button 
             onClick={() => setAutoDeduct(false)}
             className={cn(
-              "px-4 py-2 rounded-lg text-[10px] font-black transition-all tracking-widest",
+              "px-4 py-2 rounded-none text-[10px] font-black transition-all tracking-widest",
               !autoDeduct ? "bg-white text-brand-600 shadow-sm border border-slate-100" : "text-slate-400 hover:text-slate-600"
             )}
           >
@@ -146,7 +146,7 @@ export const Scanner = () => {
               { label: 'Mode', value: autoDeduct ? 'Sale' : 'View', icon: Zap },
               { label: 'Status', value: 'Ready', icon: Settings }
             ].map((stat, i) => (
-              <div key={i} className="bg-white p-4 rounded-xl border border-slate-100">
+              <div key={i} className="bg-white p-4 rounded-none border border-slate-100">
                 <div className="flex items-center gap-2 mb-1">
                   <stat.icon className="h-3 w-3 text-slate-400" />
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{stat.label}</span>
@@ -159,7 +159,7 @@ export const Scanner = () => {
 
         {/* Activity Log */}
         <div className="lg:col-span-4 flex flex-col h-full min-h-[400px]">
-          <div className="bg-white p-6 rounded-2xl border border-slate-100 flex-1 flex flex-col shadow-sm">
+          <div className="bg-white p-6 rounded-none border border-slate-100 flex-1 flex flex-col shadow-sm">
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h3 className="text-lg font-black text-slate-900 tracking-tight">Recent Scans</h3>
@@ -182,14 +182,14 @@ export const Scanner = () => {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       className={cn(
-                        "p-3 rounded-xl border flex items-center gap-3 transition-all",
+                        "p-3 rounded-none border flex items-center gap-3 transition-all",
                         item.status === 'success' 
                           ? "bg-slate-50 border-slate-100" 
                           : "bg-rose-50 border-rose-100"
                       )}
                     >
                       <div className={cn(
-                        "p-1.5 rounded-lg",
+                        "p-1.5 rounded-none",
                         item.status === 'success' ? "bg-emerald-100 text-emerald-600" : "bg-rose-100 text-rose-600"
                       )}>
                         {item.status === 'success' ? (

@@ -48,7 +48,10 @@ db.exec(`
     subtotal REAL NOT NULL DEFAULT 0,
     discount REAL NOT NULL DEFAULT 0,
     totalPrice REAL NOT NULL,
+    receivedAmount REAL DEFAULT 0,
+    change REAL DEFAULT 0,
     paymentType TEXT DEFAULT 'cash', -- 'cash' or 'debt'
+    isPaid INTEGER DEFAULT 0,
     customerName TEXT, -- for debt tracking
     createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
   );
@@ -78,6 +81,23 @@ try {
   // Columns probably already exist
 }
 
+// Migration: Add receivedAmount and change to sales if they don't exist
+try {
+  db.prepare("ALTER TABLE sales ADD COLUMN receivedAmount REAL DEFAULT 0").run();
+  db.prepare("ALTER TABLE sales ADD COLUMN change REAL DEFAULT 0").run();
+  console.log("Migration: Added receivedAmount and change columns to sales table.");
+} catch (e) {
+  // Columns probably already exist
+}
+
+// Migration: Add isPaid to sales if it doesn't exist
+try {
+  db.prepare("ALTER TABLE sales ADD COLUMN isPaid INTEGER DEFAULT 0").run();
+  console.log("Migration: Added isPaid column to sales table.");
+} catch (e) {
+  // Column probably already exists
+}
+
 // Migration: Add isDeleted to products if it doesn't exist
 try {
   db.prepare("ALTER TABLE products ADD COLUMN isDeleted INTEGER DEFAULT 0").run();
@@ -88,22 +108,6 @@ try {
 
 // Seed Data
 const seedData = () => {
-  const productCount = (db.prepare("SELECT COUNT(*) as count FROM products").get() as any).count;
-  if (productCount === 0) {
-    const products = [
-      ["Coke 1.5L", "4800016603014", "Beverages", 65, 24],
-      ["Lucky Me Pancit Canton", "4800016101015", "Instant Noodles", 15, 50],
-      ["Great Taste White", "4800016202012", "Coffee", 10, 100],
-      ["Safeguard White 130g", "4800016303019", "Personal Care", 45, 12],
-      ["SkyFlakes 10s", "4800016404016", "Snacks", 55, 20]
-    ];
-    const stmt = db.prepare("INSERT INTO products (name, barcode, category, price, stock) VALUES (?, ?, ?, ?, ?)");
-    for (const p of products) {
-      stmt.run(...p);
-    }
-    console.log("Sample products seeded.");
-  }
-
   const settingsCount = (db.prepare("SELECT COUNT(*) as count FROM settings").get() as any).count;
   if (settingsCount === 0) {
     const defaultReceipt = {
@@ -119,35 +123,6 @@ const seedData = () => {
     db.prepare("INSERT INTO settings (key, value) VALUES (?, ?)").run("receipt", JSON.stringify(defaultReceipt));
     console.log("Default settings seeded.");
   }
-
-  const salesCount = (db.prepare("SELECT COUNT(*) as count FROM sales").get() as any).count;
-  if (salesCount === 0) {
-    const products = db.prepare("SELECT * FROM products").all() as any[];
-    if (products.length > 0) {
-      // Create some sales for the last 7 days
-      const stmt = db.prepare("INSERT INTO sales (totalPrice, subtotal, discount, paymentType, customerName, createdAt) VALUES (?, ?, ?, ?, ?, ?)");
-      const itemStmt = db.prepare("INSERT INTO sale_items (saleId, productId, quantity, priceAtSale) VALUES (?, ?, ?, ?)");
-      
-      for (let i = 0; i < 15; i++) {
-        const date = new Date();
-        date.setDate(date.getDate() - Math.floor(Math.random() * 7));
-        const totalPrice = Math.floor(Math.random() * 500) + 50;
-        const paymentType = Math.random() > 0.3 ? 'cash' : 'debt';
-        const customerName = paymentType === 'debt' ? "Juan Dela Cruz" : null;
-        
-        const info = stmt.run(totalPrice, totalPrice, 0, paymentType, customerName, date.toISOString());
-        const saleId = info.lastInsertRowid;
-        
-        // Add 1-3 items per sale
-        const itemCount = Math.floor(Math.random() * 3) + 1;
-        for (let j = 0; j < itemCount; j++) {
-          const p = products[Math.floor(Math.random() * products.length)];
-          itemStmt.run(saleId, p.id, Math.floor(Math.random() * 2) + 1, p.price);
-        }
-      }
-      console.log("Sample sales seeded.");
-    }
-  }
 };
 
 seedData();
@@ -157,27 +132,8 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // Auth Middleware
-const authenticateToken = (req: any, res: any, next: any) => {
-  const authHeader = req.headers['authorization'];
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-  
-  const token = authHeader.split(' ')[1];
+// Removed for simplicity
 
-  if (!token || token === 'undefined' || token === 'null') {
-    return res.status(401).json({ message: "Unauthorized" });
-  }
-
-  jwt.verify(token, JWT_SECRET, (err: any, user: any) => {
-    if (err) {
-      console.error("JWT Verification Error:", err.message);
-      return res.status(403).json({ message: "Forbidden", error: err.message });
-    }
-    req.user = user;
-    next();
-  });
-};
 
 // --- API Routes ---
 
@@ -252,11 +208,12 @@ app.delete("/api/products/:id", (req, res) => {
 
 // Sales
 app.post("/api/sales", (req, res) => {
-  const { items, totalPrice, subtotal, discount, paymentType, customerName } = req.body; // items: [{ id, quantity, price }]
+  const { items, totalPrice, subtotal, discount, paymentType, customerName, receivedAmount, change } = req.body; // items: [{ id, quantity, price }]
+  const isPaid = paymentType === 'cash' ? 1 : 0;
   
   const transaction = db.transaction(() => {
-    const saleStmt = db.prepare("INSERT INTO sales (totalPrice, subtotal, discount, paymentType, customerName) VALUES (?, ?, ?, ?, ?)");
-    const saleInfo = saleStmt.run(totalPrice, subtotal || totalPrice, discount || 0, paymentType || 'cash', customerName || null);
+    const saleStmt = db.prepare("INSERT INTO sales (totalPrice, subtotal, discount, paymentType, isPaid, customerName, receivedAmount, change) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    const saleInfo = saleStmt.run(totalPrice, subtotal || totalPrice, discount || 0, paymentType || 'cash', isPaid, customerName || null, receivedAmount || 0, change || 0);
     const saleId = saleInfo.lastInsertRowid;
 
     const itemStmt = db.prepare("INSERT INTO sale_items (saleId, productId, quantity, priceAtSale) VALUES (?, ?, ?, ?)");
@@ -281,7 +238,7 @@ app.get("/api/sales/stats", (req, res) => {
   const totalRevenue = db.prepare("SELECT SUM(totalPrice) as total FROM sales").get() as any;
   const cashRevenue = db.prepare("SELECT SUM(totalPrice) as total FROM sales WHERE paymentType = 'cash'").get() as any;
   const debtRevenue = db.prepare("SELECT SUM(totalPrice) as total FROM sales WHERE paymentType = 'debt'").get() as any;
-  const totalProducts = db.prepare("SELECT COUNT(*) as count FROM products").get() as any;
+  const totalProducts = db.prepare("SELECT COUNT(*) as count FROM products WHERE isDeleted = 0").get() as any;
   const totalSalesCount = db.prepare("SELECT COUNT(*) as count FROM sales").get() as any;
   
   const dailySales = db.prepare(`
@@ -303,10 +260,13 @@ app.get("/api/sales/stats", (req, res) => {
     LIMIT 5
   `).all();
 
+  const totalDebts = db.prepare("SELECT SUM(totalPrice) as total FROM sales WHERE paymentType = 'debt' AND isPaid = 0").get() as any;
+  
   res.json({
     totalRevenue: totalRevenue.total || 0,
     cashRevenue: cashRevenue.total || 0,
     debtRevenue: debtRevenue.total || 0,
+    totalDebts: totalDebts.total || 0,
     totalProducts: totalProducts.count || 0,
     totalSalesCount: totalSalesCount.count || 0,
     dailySales,
@@ -315,15 +275,55 @@ app.get("/api/sales/stats", (req, res) => {
 });
 
 app.get("/api/sales", (req, res) => {
-  const sales = db.prepare(`
-    SELECT s.*, GROUP_CONCAT(p.name || ' (x' || si.quantity || ')') as items
-    FROM sales s
-    JOIN sale_items si ON s.id = si.saleId
-    JOIN products p ON si.productId = p.id
-    GROUP BY s.id
-    ORDER BY s.createdAt DESC
-  `).all();
-  res.json(sales);
+  const { type, period } = req.query;
+  let query = "SELECT * FROM sales";
+  const params: any[] = [];
+  const conditions: string[] = [];
+
+  if (type) {
+    conditions.push("paymentType = ?");
+    params.push(type);
+  }
+
+  if (period) {
+    if (period === 'today') {
+      conditions.push("DATE(createdAt) = DATE('now')");
+    } else if (period === 'week') {
+      conditions.push("createdAt >= DATE('now', '-7 days')");
+    } else if (period === 'month') {
+      conditions.push("createdAt >= DATE('now', '-30 days')");
+    } else if (period === 'year') {
+      conditions.push("createdAt >= DATE('now', '-365 days')");
+    }
+  }
+
+  if (conditions.length > 0) {
+    query += " WHERE " + conditions.join(" AND ");
+  }
+
+  query += " ORDER BY createdAt DESC";
+
+  const sales = db.prepare(query).all(...params) as any[];
+  
+  const salesWithItems = sales.map(sale => {
+    const items = db.prepare(`
+      SELECT si.*, p.name
+      FROM sale_items si
+      JOIN products p ON si.productId = p.id
+      WHERE si.saleId = ?
+    `).all(sale.id);
+    
+    return {
+      ...sale,
+      items: items.map((item: any) => ({
+        product: { name: item.name },
+        quantity: item.quantity,
+        price: item.priceAtSale
+      }))
+    };
+  });
+  
+  res.json(salesWithItems);
 });
 
 app.get("/api/sales/:id", (req, res) => {
@@ -351,8 +351,50 @@ app.get("/api/sales/:id", (req, res) => {
 app.put("/api/sales/:id/pay", (req, res) => {
   const { id } = req.params;
   try {
-    db.prepare("UPDATE sales SET paymentType = 'cash' WHERE id = ?").run(id);
+    db.prepare("UPDATE sales SET isPaid = 1 WHERE id = ?").run(id);
     res.json({ message: "Debt marked as paid" });
+  } catch (error: any) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+app.delete("/api/sales/:id", (req, res) => {
+  const { id } = req.params;
+  try {
+    const transaction = db.transaction(() => {
+      // Get items to restore stock
+      const items = db.prepare("SELECT productId, quantity FROM sale_items WHERE saleId = ?").all(id) as any[];
+      
+      for (const item of items) {
+        db.prepare("UPDATE products SET stock = stock + ? WHERE id = ?").run(item.quantity, item.productId);
+      }
+
+      // Delete sale items first
+      db.prepare("DELETE FROM sale_items WHERE saleId = ?").run(id);
+      // Delete the sale
+      db.prepare("DELETE FROM sales WHERE id = ?").run(id);
+    });
+    transaction();
+    res.json({ message: "Transaction deleted and stock restored" });
+  } catch (error: any) {
+    res.status(400).json({ message: error.message });
+  }
+});
+
+app.delete("/api/sales", (req, res) => {
+  try {
+    const transaction = db.transaction(() => {
+      // Restore all stock from all sales before deleting
+      const items = db.prepare("SELECT productId, quantity FROM sale_items").all() as any[];
+      for (const item of items) {
+        db.prepare("UPDATE products SET stock = stock + ? WHERE id = ?").run(item.quantity, item.productId);
+      }
+      
+      db.prepare("DELETE FROM sale_items").run();
+      db.prepare("DELETE FROM sales").run();
+    });
+    transaction();
+    res.json({ message: "All sales history cleared and stock restored" });
   } catch (error: any) {
     res.status(400).json({ message: error.message });
   }
@@ -374,6 +416,32 @@ app.post("/api/settings/:key", (req, res) => {
     res.json({ message: "Setting updated", value: req.body });
   } catch (error: any) {
     res.status(400).json({ message: error.message });
+  }
+});
+
+// Reset Application
+app.post('/api/reset', (req, res) => {
+  try {
+    db.transaction(() => {
+      db.prepare('DELETE FROM sale_items').run();
+      db.prepare('DELETE FROM sales').run();
+      db.prepare('DELETE FROM products').run();
+      db.prepare('DELETE FROM settings').run();
+      
+      // Re-insert default settings
+      const defaultSettings = {
+        storeName: 'SariConnect Pro',
+        address: '123 Market St, Manila',
+        phone: '0912 345 6789',
+        footer: 'Thank you for your purchase!',
+        showBarcode: true,
+        logoUrl: ''
+      };
+      db.prepare('INSERT INTO settings (key, value) VALUES (?, ?)').run('receipt', JSON.stringify(defaultSettings));
+    })();
+    res.json({ message: 'Application reset successfully' });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
   }
 });
 

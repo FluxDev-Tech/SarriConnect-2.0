@@ -204,16 +204,6 @@ export const Login = () => {
             )}
           </button>
 
-          {/* Quick Login Button */}
-          <button
-            type="button"
-            onClick={handleQuickLogin}
-            disabled={isLoading}
-            className="w-[85%] bg-black text-white font-bold text-sm py-3 rounded-none transition-all active:scale-[0.98] shadow-sm disabled:opacity-70 flex items-center justify-center mb-4"
-          >
-            Quick Admin Login
-          </button>
-
           {/* Google Login Button */}
           <button
             type="button"

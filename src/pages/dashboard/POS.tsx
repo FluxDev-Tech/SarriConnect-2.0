@@ -55,7 +55,7 @@ export const POS = () => {
   const [lastOrder, setLastOrder] = React.useState<any>(null);
   const [isCartOpen, setIsCartOpen] = React.useState(false);
   const [showClearConfirm, setShowClearConfirm] = React.useState(false);
-  const [lastAddedId, setLastAddedId] = React.useState<number | null>(null);
+  const [lastAddedId, setLastAddedId] = React.useState<number | string | null>(null);
   const [viewMode, setViewMode] = React.useState<'grid' | 'list'>('grid');
   const searchInputRef = React.useRef<HTMLInputElement>(null);
   const catalogContainerRef = React.useRef<HTMLDivElement>(null);
@@ -134,11 +134,11 @@ export const POS = () => {
     });
   };
 
-  const removeFromCart = (productId: number) => {
+  const removeFromCart = (productId: number | string) => {
     setCart(prev => prev.filter(item => item.id !== productId));
   };
 
-  const updateQuantity = (productId: number, delta: number) => {
+  const updateQuantity = (productId: number | string, delta: number) => {
     setCart(prev => prev.map(item => {
       if (item.id === productId) {
         const newQty = Math.max(1, Math.min(item.stock, item.quantity + delta));
@@ -159,7 +159,8 @@ export const POS = () => {
     const items = cart.map(item => ({
       id: item.id,
       quantity: item.quantity,
-      price: item.price
+      price: item.price,
+      name: item.name
     }));
 
     try {

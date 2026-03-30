@@ -6,7 +6,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Store, ArrowRight, Lock, User, Key, Eye, EyeOff, ShieldCheck, Loader2 } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { useStore } from '../../store/useStore';
-import api from '../../services/api';
+import { auth, db } from '../../services/firebase';
+import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { motion, AnimatePresence } from 'motion/react';
 
 const loginSchema = z.object({
@@ -37,12 +39,82 @@ export const Login = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const res = await api.post('/auth/login', data);
-      setAuth(res.data.user, res.data.token);
+      const userCredential = await signInWithEmailAndPassword(auth, data.email, data.password);
+      const firebaseUser = userCredential.user;
+      
+      // Fetch user data from Firestore
+      const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+      if (!userDoc.exists()) {
+        // Create user doc if it doesn't exist (e.g., first time login)
+        await setDoc(doc(db, 'users', firebaseUser.uid), {
+          name: firebaseUser.displayName || 'Staff User',
+          email: firebaseUser.email,
+          role: 'staff',
+          createdAt: serverTimestamp()
+        });
+      }
+      
       navigate('/');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Invalid email or password');
+      setError(err.message || 'Invalid email or password');
       console.error("Login Error:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      const firebaseUser = result.user;
+      
+      const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+      if (!userDoc.exists()) {
+        await setDoc(doc(db, 'users', firebaseUser.uid), {
+          name: firebaseUser.displayName || 'User',
+          email: firebaseUser.email,
+          role: 'staff',
+          createdAt: serverTimestamp()
+        });
+      }
+      navigate('/');
+    } catch (err: any) {
+      setError(err.message || 'Google login failed');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleQuickLogin = async () => {
+    setIsLoading(true);
+    setError(null);
+    const adminEmail = 'admin@store.com';
+    const adminPass = 'admin123';
+    try {
+      try {
+        await signInWithEmailAndPassword(auth, adminEmail, adminPass);
+      } catch (signInErr: any) {
+        // If user doesn't exist, create them
+        if (signInErr.code === 'auth/user-not-found' || signInErr.code === 'auth/invalid-credential') {
+          const createRes = await createUserWithEmailAndPassword(auth, adminEmail, adminPass);
+          const firebaseUser = createRes.user;
+          await setDoc(doc(db, 'users', firebaseUser.uid), {
+            name: 'Admin User',
+            email: adminEmail,
+            role: 'admin',
+            createdAt: serverTimestamp()
+          });
+        } else {
+          throw signInErr;
+        }
+      }
+      navigate('/');
+    } catch (err: any) {
+      console.error("Quick Login Error:", err);
+      setError('Quick login failed: ' + (err.message || 'Unknown error'));
     } finally {
       setIsLoading(false);
     }
@@ -123,13 +195,34 @@ export const Login = () => {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-[85%] bg-[#fdf0d5] hover:bg-[#fae1b0] text-black font-black text-lg py-3.5 rounded-none transition-all active:scale-[0.98] shadow-sm disabled:opacity-70 flex items-center justify-center mb-6"
+            className="w-[85%] bg-[#fdf0d5] hover:bg-[#fae1b0] text-black font-black text-lg py-3.5 rounded-none transition-all active:scale-[0.98] shadow-sm disabled:opacity-70 flex items-center justify-center mb-4"
           >
             {isLoading ? (
               <Loader2 className="h-5 w-5 animate-spin" />
             ) : (
               "Log In"
             )}
+          </button>
+
+          {/* Quick Login Button */}
+          <button
+            type="button"
+            onClick={handleQuickLogin}
+            disabled={isLoading}
+            className="w-[85%] bg-black text-white font-bold text-sm py-3 rounded-none transition-all active:scale-[0.98] shadow-sm disabled:opacity-70 flex items-center justify-center mb-4"
+          >
+            Quick Admin Login
+          </button>
+
+          {/* Google Login Button */}
+          <button
+            type="button"
+            onClick={handleGoogleLogin}
+            disabled={isLoading}
+            className="w-[85%] border-2 border-black text-black font-bold text-sm py-3 rounded-none transition-all active:scale-[0.98] shadow-sm disabled:opacity-70 flex items-center justify-center mb-6"
+          >
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5 mr-2" />
+            Continue with Google
           </button>
 
           {/* Forgot Password */}

@@ -24,7 +24,7 @@ import { Sale } from '../../types';
 import { motion, AnimatePresence } from 'motion/react';
 
 export const Sales = () => {
-  const { receiptSettings, fetchReceiptSettings } = useStore();
+  const { receiptSettings, fetchReceiptSettings, fetchSales: fetchSalesFromStore } = useStore();
   const [sales, setSales] = React.useState<Sale[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [searchQuery, setSearchQuery] = React.useState('');
@@ -36,13 +36,8 @@ export const Sales = () => {
   const fetchSales = async () => {
     setIsLoading(true);
     try {
-      const res = await api.get('/sales', {
-        params: {
-          type: activeTab,
-          period: dateFilter
-        }
-      });
-      setSales(res.data);
+      const data = await fetchSalesFromStore(activeTab, dateFilter);
+      setSales(data);
     } catch (err) {
       console.error(err);
     } finally {

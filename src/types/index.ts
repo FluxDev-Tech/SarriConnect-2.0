@@ -6,7 +6,7 @@ export interface User {
 }
 
 export interface Product {
-  id: number;
+  id: number | string;
   name: string;
   barcode: string;
   category: string;
@@ -17,7 +17,7 @@ export interface Product {
 }
 
 export interface Sale {
-  id: number;
+  id: number | string;
   totalPrice: number;
   subtotal: number;
   discount: number;

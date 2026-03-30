@@ -1,6 +1,7 @@
 import React from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useStore } from './store/useStore';
+import { useEffect } from 'react';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 import { Login } from './pages/auth/Login';
 import { Dashboard } from './pages/dashboard/Dashboard';
@@ -23,6 +24,12 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 };
 
 export const AppRouter = () => {
+  const initializeAuth = useStore((state) => state.initializeAuth);
+
+  useEffect(() => {
+    initializeAuth();
+  }, [initializeAuth]);
+
   return (
     <Routes>
       <Route path="/login" element={<Login />} />

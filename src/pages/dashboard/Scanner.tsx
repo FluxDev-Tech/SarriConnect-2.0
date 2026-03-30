@@ -68,7 +68,7 @@ export const Scanner = () => {
       return;
     }
     
-    const items = [{ id: product.id, quantity: 1, price: product.price }];
+    const items = [{ id: product.id, quantity: 1, price: product.price, name: product.name }];
     try {
       await recordSale(items, product.price, product.price, 0, 'cash', 'Quick Scan Sale', undefined, undefined, product.price, 0);
       setScanHistory(prev => [{ 

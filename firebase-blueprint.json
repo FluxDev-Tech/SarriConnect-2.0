@@ -1,0 +1,91 @@
+{
+  "entities": {
+    "users": {
+      "title": "User",
+      "description": "Application users",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "role": { "type": "string", "enum": ["admin", "staff"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "email", "role"]
+    },
+    "products": {
+      "title": "Product",
+      "description": "Store products",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "barcode": { "type": "string" },
+        "category": { "type": "string" },
+        "price": { "type": "number" },
+        "stock": { "type": "integer" },
+        "imageUrl": { "type": "string" },
+        "isDeleted": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "price", "stock"]
+    },
+    "sales": {
+      "title": "Sale",
+      "description": "Sales transactions",
+      "type": "object",
+      "properties": {
+        "subtotal": { "type": "number" },
+        "discount": { "type": "number" },
+        "totalPrice": { "type": "number" },
+        "receivedAmount": { "type": "number" },
+        "change": { "type": "number" },
+        "paymentType": { "type": "string", "enum": ["cash", "debt"] },
+        "isPaid": { "type": "boolean" },
+        "customerName": { "type": "string" },
+        "customerAddress": { "type": "string" },
+        "customerPhone": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "productId": { "type": "string" },
+              "name": { "type": "string" },
+              "quantity": { "type": "integer" },
+              "priceAtSale": { "type": "number" }
+            }
+          }
+        }
+      },
+      "required": ["totalPrice", "paymentType", "createdAt"]
+    },
+    "settings": {
+      "title": "Settings",
+      "description": "Application settings",
+      "type": "object",
+      "properties": {
+        "key": { "type": "string" },
+        "value": { "type": "object" }
+      },
+      "required": ["key", "value"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "users",
+      "description": "User profiles"
+    },
+    "/products/{productId}": {
+      "schema": "products",
+      "description": "Product inventory"
+    },
+    "/sales/{saleId}": {
+      "schema": "sales",
+      "description": "Sales records"
+    },
+    "/settings/{settingId}": {
+      "schema": "settings",
+      "description": "App settings"
+    }
+  }
+}

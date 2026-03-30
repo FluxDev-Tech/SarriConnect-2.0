@@ -24,7 +24,7 @@ import api from '../../services/api';
 
 export const Debts = () => {
   const navigate = useNavigate();
-  const { fetchStats, receiptSettings, fetchReceiptSettings, markAsPaid } = useStore();
+  const { fetchStats, receiptSettings, fetchReceiptSettings, markAsPaid, fetchSales, deleteSale } = useStore();
   const [debts, setDebts] = React.useState<Sale[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [searchQuery, setSearchQuery] = React.useState('');
@@ -40,16 +40,16 @@ export const Debts = () => {
   const fetchDebts = React.useCallback(async () => {
     setIsLoading(true);
     try {
-      const res = await api.get('/sales');
-      // Filter only debts
-      const debtSales = (res.data || []).filter((s: Sale) => s.paymentType === 'debt' && !s.isPaid);
+      const data = await fetchSales('debt');
+      // Filter only unpaid debts
+      const debtSales = (data || []).filter((s: Sale) => !s.isPaid);
       setDebts(debtSales);
     } catch (err) {
       console.error(err);
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [fetchSales]);
 
   React.useEffect(() => {
     fetchDebts();
@@ -85,9 +85,8 @@ export const Debts = () => {
     if (!debtToDelete) return;
 
     try {
-      await api.delete(`/sales/${debtToDelete.id}`);
+      await deleteSale(debtToDelete.id);
       fetchDebts();
-      fetchStats();
       setIsDeleteModalOpen(false);
       setDebtToDelete(null);
     } catch (err) {
